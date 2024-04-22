@@ -7,7 +7,7 @@ toolchain go1.22.1
 require (
 	github.com/360EntSecGroup-Skylar/excelize v1.4.1
 	github.com/BurntSushi/toml v1.3.2
-	github.com/IBAX-io/needle v0.0.0-20240422030607-8c251c9f1531
+	github.com/IBAX-io/needle v0.0.0-20240422101104-749ffd985feb
 	github.com/cactus/go-statsd-client/v5 v5.1.0
 	github.com/centrifugal/gocent v2.2.0+incompatible
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0
