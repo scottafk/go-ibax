@@ -26,7 +26,6 @@ func getTxRecord(w http.ResponseWriter, r *http.Request) {
 		hashList = strings.Split(hashes, ",")
 	}
 	for _, hashStr := range hashList {
-
 		if result, err := sqldb.GetTxRecord(nil, hashStr); err == nil {
 			resultList = append(resultList, result)
 		}

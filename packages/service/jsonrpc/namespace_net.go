@@ -32,8 +32,7 @@ func (p *NetApi) GetApis() []any {
 	return apis
 }
 
-type networkApi struct {
-}
+type networkApi struct{}
 
 func NewNetworkApi() *networkApi {
 	n := &networkApi{}

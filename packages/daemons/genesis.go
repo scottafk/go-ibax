@@ -16,7 +16,6 @@ import (
 )
 
 func InitialLoad(logger *log.Entry) error {
-
 	// check for initial load
 	toLoad, err := needLoad(logger)
 	if err != nil {

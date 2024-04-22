@@ -3,13 +3,14 @@ package tcpclient
 import (
 	"encoding/json"
 	"errors"
+	"time"
+
 	"github.com/IBAX-io/go-ibax/packages/common/crypto"
 	"github.com/IBAX-io/go-ibax/packages/consts"
 	"github.com/IBAX-io/go-ibax/packages/network"
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
 	"github.com/IBAX-io/go-ibax/packages/utils"
 	log "github.com/sirupsen/logrus"
-	"time"
 )
 
 func UpdateMachineStatus(localAddress, tcpAddress string, logger *log.Entry) ([]byte, error) {
@@ -78,7 +79,6 @@ func UpdateMachineStatus(localAddress, tcpAddress string, logger *log.Entry) ([]
 
 func BroadcastNodeConnInfo(tcpAddress string, data []byte, logger *log.Entry) error {
 	conn, err := newConnection(tcpAddress)
-
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "tcpAddress": tcpAddress}).Error("dialing to host")
 		return err

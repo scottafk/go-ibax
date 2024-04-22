@@ -6,10 +6,10 @@
 package api
 
 import (
-	"github.com/IBAX-io/go-ibax/packages/converter"
 	"net/http"
 
 	"github.com/IBAX-io/go-ibax/packages/consts"
+	"github.com/IBAX-io/go-ibax/packages/converter"
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
 	log "github.com/sirupsen/logrus"
 )

@@ -26,9 +26,7 @@ func init() {
 	_vm = newVM()
 }
 
-var (
-	_vm *GlobalVm
-)
+var _vm *GlobalVm
 
 func newVM() *GlobalVm {
 	vm := NewVM()
@@ -44,8 +42,10 @@ func GetVM() *VM {
 	return _vm.smartVM
 }
 
-var smartObjects map[string]*ObjInfo
-var children uint32
+var (
+	smartObjects map[string]*ObjInfo
+	children     uint32
+)
 
 func SavepointSmartVMObjects() {
 	smartObjects = make(map[string]*ObjInfo)
@@ -75,8 +75,10 @@ func VMCompileEval(vm *VM, src string, prefix uint32) error {
 	if len(src) == 0 {
 		return nil
 	}
-	allowed := []string{`0`, `1`, `true`, `false`, `ContractConditions\(\s*\".*\"\s*\)`,
-		`ContractAccess\(\s*\".*\"\s*\)`, `RoleAccess\(\s*.*\s*\)`}
+	allowed := []string{
+		`0`, `1`, `true`, `false`, `ContractConditions\(\s*\".*\"\s*\)`,
+		`ContractAccess\(\s*\".*\"\s*\)`, `RoleAccess\(\s*.*\s*\)`,
+	}
 	for _, v := range allowed {
 		re := regexp.MustCompile(`^` + v + `$`)
 		if re.Match([]byte(src)) {

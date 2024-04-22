@@ -22,12 +22,10 @@ const (
 	WhiteHoleAddr = "WhiteHole"
 )
 
-var (
-	HoleAddrMap = map[string]Hole{
-		BlackHoleAddr: {K: 0, S: "0000-0000-0000-0000-0000"},
-		WhiteHoleAddr: {K: 5555, S: "0000-0000-0000-0000-5555"},
-	}
-)
+var HoleAddrMap = map[string]Hole{
+	BlackHoleAddr: {K: 0, S: "0000-0000-0000-0000-0000"},
+	WhiteHoleAddr: {K: 5555, S: "0000-0000-0000-0000-5555"},
+}
 
 // AddressToID converts the string representation of the wallet number to a numeric
 func AddressToID(input string) (addr int64) {
@@ -38,7 +36,6 @@ func AddressToID(input string) (addr int64) {
 	if input[0] == '-' {
 		uaddr, err := strconv.ParseInt(input, 10, 64)
 		if err != nil {
-
 		}
 		addr = uaddr
 	} else if has4LineContain(input) {
@@ -46,7 +43,6 @@ func AddressToID(input string) (addr int64) {
 	} else {
 		uaddr, err := strconv.ParseUint(input, 10, 64)
 		if err != nil {
-
 		}
 		addr = int64(uaddr)
 	}
@@ -93,7 +89,7 @@ func StringToAddress(str string) (result int64) {
 	if len(str) == 0 {
 		return 0
 	}
-	//string of int64
+	// string of int64
 	if str[0] == '-' {
 		var id int64
 		id, err = strconv.ParseInt(str, 10, 64)

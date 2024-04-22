@@ -7,10 +7,11 @@ package jsonrpc
 
 import (
 	"encoding/hex"
-	"github.com/IBAX-io/go-ibax/packages/converter"
-	"github.com/IBAX-io/go-ibax/packages/types"
 	"net/http"
 	"strings"
+
+	"github.com/IBAX-io/go-ibax/packages/converter"
+	"github.com/IBAX-io/go-ibax/packages/types"
 )
 
 const (

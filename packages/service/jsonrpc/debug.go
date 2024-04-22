@@ -5,13 +5,13 @@
 package jsonrpc
 
 import (
+	"runtime"
+
 	"github.com/IBAX-io/go-ibax/packages/conf/syspar"
 	"github.com/IBAX-io/go-ibax/packages/service/node"
-	"runtime"
 )
 
-type debugApi struct {
-}
+type debugApi struct{}
 
 func newDebugApi() *debugApi {
 	return &debugApi{}
@@ -26,8 +26,8 @@ func (c *debugApi) GetMemStat() (*memMetric, *Error) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 
-	//Alloc: Number of bytes allocated and still in use
-	//Sys: The number of bytes fetched from the system (total)
+	// Alloc: Number of bytes allocated and still in use
+	// Sys: The number of bytes fetched from the system (total)
 	return &memMetric{Alloc: m.Alloc, Sys: m.Sys}, nil
 }
 

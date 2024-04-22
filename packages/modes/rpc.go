@@ -7,13 +7,14 @@ package modes
 
 import (
 	"fmt"
-	"github.com/IBAX-io/go-ibax/packages/conf"
-	"github.com/IBAX-io/go-ibax/packages/service/jsonrpc"
 	"net/http"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/IBAX-io/go-ibax/packages/conf"
+	"github.com/IBAX-io/go-ibax/packages/service/jsonrpc"
 )
 
 const stopTimeout = 5 * time.Second

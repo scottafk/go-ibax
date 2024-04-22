@@ -36,6 +36,7 @@ var (
 	gAuth             string
 	gAddress          string
 	gPrivate, gPublic string
+	gLoginEcosystem   int64
 )
 
 // PrivateToPublicHex returns the hex public key for the specified hex private key.
@@ -102,9 +103,7 @@ func sendPost(url string, form *url.Values, v any) error {
 }
 
 func keyLogin(state int64) (err error) {
-	var (
-		key, sign []byte
-	)
+	var key, sign []byte
 
 	key, err = os.ReadFile(`key`)
 	if err != nil {
@@ -133,8 +132,10 @@ func keyLogin(state int64) (err error) {
 	if err != nil {
 		return
 	}
-	form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)},
-		`ecosystem`: {converter.Int64ToStr(state)}, "role_id": {"0"}}
+	form := url.Values{
+		"pubkey": {pub}, "signature": {hex.EncodeToString(sign)},
+		`ecosystem`: {converter.Int64ToStr(state)}, "role_id": {"0"},
+	}
 	var logret loginResult
 	err = sendPost(`login`, &form, &logret)
 	if err != nil {
@@ -144,6 +145,7 @@ func keyLogin(state int64) (err error) {
 	gPrivate = string(key)
 	gPublic, err = PrivateToPublicHex(gPrivate)
 	gAuth = logret.Token
+	gLoginEcosystem = state
 	if err != nil {
 		return
 	}
@@ -151,9 +153,7 @@ func keyLogin(state int64) (err error) {
 }
 
 func keyLoginToken(state int64) (err error) {
-	var (
-		key, sign []byte
-	)
+	var key, sign []byte
 
 	str, _ := os.Getwd()
 	fmt.Println("dir " + str)
@@ -184,8 +184,10 @@ func keyLoginToken(state int64) (err error) {
 	if err != nil {
 		return
 	}
-	form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)},
-		`ecosystem`: {converter.Int64ToStr(state)}, "role_id": {"0"}, "expire": {"5"}}
+	form := url.Values{
+		"pubkey": {pub}, "signature": {hex.EncodeToString(sign)},
+		`ecosystem`: {converter.Int64ToStr(state)}, "role_id": {"0"}, "expire": {"5"},
+	}
 	var logret loginResult
 	err = sendPost(`login`, &form, &logret)
 	if err != nil {
@@ -202,9 +204,7 @@ func keyLoginToken(state int64) (err error) {
 }
 
 func keyLoginex(state int64, m ...string) (err error) {
-	var (
-		key, sign []byte
-	)
+	var key, sign []byte
 
 	key, err = os.ReadFile(`key` + m[0])
 	if err != nil {
@@ -233,8 +233,10 @@ func keyLoginex(state int64, m ...string) (err error) {
 	if err != nil {
 		return
 	}
-	form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)},
-		`ecosystem`: {converter.Int64ToStr(state)}, "role_id": {"0"}}
+	form := url.Values{
+		"pubkey": {pub}, "signature": {hex.EncodeToString(sign)},
+		`ecosystem`: {converter.Int64ToStr(state)}, "role_id": {"0"},
+	}
 	var logret loginResult
 	err = sendPost(`login`, &form, &logret)
 	if err != nil {
@@ -470,14 +472,14 @@ func postTxResultMultipart(name string, form getter) (id int64, msg string, err 
 		conname := crypto.RandSeq(10)
 		params["ApplicationId"] = int64(1)
 		params["Conditions"] = "1"
-		//params["TokenEcosystem"] = int64(2)
+		// params["TokenEcosystem"] = int64(2)
 		params["Value"] = fmt.Sprintf(`contract rnd%v%d  { action { }}`, conname, i)
 		expedite := strconv.Itoa(1)
 		data, txhash, _ := transaction.NewTransactionInProc(types.SmartTransaction{
 			Header: &types.Header{
 				ID:          int(contract.ID),
 				Time:        time.Now().Unix(),
-				EcosystemID: 1,
+				EcosystemID: gLoginEcosystem,
 				KeyID:       crypto.Address(publicKey),
 				NetworkID:   conf.Config.LocalConf.NetworkID,
 			},
@@ -725,7 +727,6 @@ func postUTXOTxMultipart(form *url.Values) error {
 }
 
 func postTransferSelfTxResult(form getter) (id int64, msg string, err error) {
-
 	var privateKey, publicKey []byte
 	if privateKey, err = hex.DecodeString(gPrivate); err != nil {
 		return
@@ -744,7 +745,7 @@ func postTransferSelfTxResult(form getter) (id int64, msg string, err error) {
 		},
 		TransferSelf: &types.TransferSelf{
 			Value: "1000000000000000000",
-			//Asset:  "IBAX",
+			// Asset:  "IBAX",
 			Source: "UTXO",
 			Target: "Account",
 		},
@@ -776,7 +777,6 @@ func postTransferSelfTxResult(form getter) (id int64, msg string, err error) {
 }
 
 func postUTXOTxResult(form getter) (id int64, msg string, err error) {
-
 	var privateKey, publicKey []byte
 	if privateKey, err = hex.DecodeString(gPrivate); err != nil {
 		return
@@ -838,7 +838,6 @@ func cutErr(err error) string {
 }
 
 func TestGetAvatar(t *testing.T) {
-
 	err := keyLogin(1)
 	assert.NoError(t, err)
 

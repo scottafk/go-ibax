@@ -10,6 +10,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+
 	"github.com/IBAX-io/go-ibax/packages/block"
 	"github.com/IBAX-io/go-ibax/packages/common"
 	"github.com/IBAX-io/go-ibax/packages/conf/syspar"
@@ -20,13 +24,9 @@ import (
 	"github.com/IBAX-io/go-ibax/packages/types"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
-	"net/http"
-	"strconv"
-	"strings"
 )
 
-type blockChainApi struct {
-}
+type blockChainApi struct{}
 
 func NewBlockChainApi() *blockChainApi {
 	return &blockChainApi{}
@@ -434,10 +434,12 @@ func (b *blockChainApi) DetailedBlocks(ctx RequestContext, blockId, count int64)
 
 			txDetailedInfoCollection = append(txDetailedInfoCollection, txDetailedInfo)
 
-			logger.WithFields(log.Fields{"block_id": blockModel.ID, "tx hash": txDetailedInfo.Hash,
+			logger.WithFields(log.Fields{
+				"block_id": blockModel.ID, "tx hash": txDetailedInfo.Hash,
 				"contract_name": txDetailedInfo.ContractName, "key_id": txDetailedInfo.KeyID,
 				"time": txDetailedInfo.Time, "type": txDetailedInfo.Type,
-				"params": txDetailedInfoCollection}).Debug("BlockChain Transactions Information")
+				"params": txDetailedInfoCollection,
+			}).Debug("BlockChain Transactions Information")
 		}
 
 		header := BlockHeaderInfo{
@@ -603,10 +605,12 @@ func (b *blockChainApi) DetailedBlock(ctx RequestContext, bh *BlockIdOrHash) (*B
 
 		txDetailedInfoCollection = append(txDetailedInfoCollection, txDetailedInfo)
 
-		logger.WithFields(log.Fields{"block_id": bk.ID, "tx hash": txDetailedInfo.Hash,
+		logger.WithFields(log.Fields{
+			"block_id": bk.ID, "tx hash": txDetailedInfo.Hash,
 			"contract_name": txDetailedInfo.ContractName, "key_id": txDetailedInfo.KeyID,
 			"time": txDetailedInfo.Time, "type": txDetailedInfo.Type,
-			"params": txDetailedInfoCollection}).Debug("[GetBlock]BlockChain Transactions Information")
+			"params": txDetailedInfoCollection,
+		}).Debug("[GetBlock]BlockChain Transactions Information")
 	}
 
 	header := BlockHeaderInfo{
@@ -671,7 +675,8 @@ func (b *blockChainApi) GetEcosystemParams(ctx RequestContext, auth Auth, ecosys
 	form := &AppParamsForm{
 		ecosystemForm: ecosystemForm{
 			Validator: auth.EcosystemGetter,
-		}}
+		},
+	}
 	if ecosystem != nil {
 		form.EcosystemID = *ecosystem
 	}
@@ -968,5 +973,4 @@ func (b *blockChainApi) GetBlocksCountByNode(ctx RequestContext, nodePosition in
 	bm := blockMetricByNode{TotalCount: bk.ID, PartialCount: c}
 
 	return &bm, nil
-
 }

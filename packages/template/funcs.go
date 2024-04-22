@@ -14,6 +14,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/IBAX-io/needle/compiler"
+	"github.com/IBAX-io/needle/vm"
+
 	"github.com/IBAX-io/go-ibax/packages/common/crypto"
 	"github.com/IBAX-io/go-ibax/packages/conf/syspar"
 	"github.com/IBAX-io/go-ibax/packages/consts"
@@ -21,7 +24,6 @@ import (
 	"github.com/IBAX-io/go-ibax/packages/language"
 	"github.com/IBAX-io/go-ibax/packages/smart"
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
-	"github.com/IBAX-io/go-ibax/packages/types"
 	"github.com/IBAX-io/go-ibax/packages/utils"
 
 	qb "github.com/IBAX-io/go-ibax/packages/storage/sqldb/queryBuilder"
@@ -67,8 +69,10 @@ func init() {
 	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source,Ecosystem`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
 	funcs[`GetVar`] = tplFunc{getvarTag, defaultTag, `getvar`, `Name`}
-	funcs[`GetHistory`] = tplFunc{getHistoryTag, defaultTag, `gethistory`,
-		`Source,Name,Id,RollbackId`}
+	funcs[`GetHistory`] = tplFunc{
+		getHistoryTag, defaultTag, `gethistory`,
+		`Source,Name,Id,RollbackId`,
+	}
 	funcs[`Hint`] = tplFunc{defaultTag, defaultTag, `hint`, `Icon,Title,Text`}
 	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio,Format`}
 	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
@@ -119,8 +123,10 @@ func init() {
 		`Popup`:             {tplFunc{popupTag, defaultTailFull, `popup`, `Width,Header`}, true},
 		`Style`:             {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 		`CompositeContract`: {tplFunc{compositeTag, defaultTailFull, `composite`, `Name,Data`}, false},
-		`ErrorRedirect`: {tplFunc{errredirTag, defaultTailFull, `errorredirect`,
-			`ErrorID,PageName,PageParams`}, false},
+		`ErrorRedirect`: {tplFunc{
+			errredirTag, defaultTailFull, `errorredirect`,
+			`ErrorID,PageName,PageParams`,
+		}, false},
 	}}
 	tails[`div`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
@@ -233,9 +239,7 @@ func menugroupTag(par parFunc) string {
 }
 
 func forlistTag(par parFunc) (ret string) {
-	var (
-		name, indexName string
-	)
+	var name, indexName string
 	setAllAttr(par)
 	if len((*par.Pars)[`Source`]) > 0 {
 		name = par.Node.Attr[`source`].(string)
@@ -339,8 +343,10 @@ func paramToSource(par parFunc, val string) string {
 			converter.StrToInt(getVar(par.Workspace, `ecosystem_id`)), getVar(par.Workspace, `lang`))
 		data = append(data, []string{converter.IntToStr(key + 1), item})
 	}
-	node := node{Tag: `data`, Attr: map[string]any{`columns`: &cols, `types`: &types,
-		`data`: &data, `source`: (*par.Pars)[`Source`]}}
+	node := node{Tag: `data`, Attr: map[string]any{
+		`columns`: &cols, `types`: &types,
+		`data`: &data, `source`: (*par.Pars)[`Source`],
+	}}
 	par.Owner.Children = append(par.Owner.Children, &node)
 
 	par.Workspace.SetSource((*par.Pars)[`Source`], &Source{
@@ -620,11 +626,11 @@ func dbfindTag(par parFunc) string {
 					return errWhere.Error()
 				}
 			case map[string]any:
-				where, err = qb.GetWhere(types.LoadMap(v))
+				where, err = qb.GetWhere(compiler.LoadMap(v))
 				if err != nil {
 					return err.Error()
 				}
-			case *types.Map:
+			case *compiler.Map:
 				where, err = qb.GetWhere(v)
 				if err != nil {
 					return err.Error()
@@ -846,10 +852,12 @@ func dbfindTag(par parFunc) string {
 		}
 		fltResult, err := sc.VM.EvalIf(perm[`filter`], uint32(sc.TxSmart.EcosystemID),
 			map[string]any{
-				`data`:         result,
-				`ecosystem_id`: sc.TxSmart.EcosystemID,
-				`key_id`:       sc.TxSmart.KeyID, `sc`: sc,
-				`block_time`: 0, `time`: sc.Timestamp})
+				vm.ExtendTxCost: syspar.GetMaxCost(),
+				`data`:          result,
+				`ecosystem_id`:  sc.TxSmart.EcosystemID,
+				`key_id`:        sc.TxSmart.KeyID, `sc`: sc,
+				`block_time`: 0, `time`: sc.Timestamp,
+			})
 		if err != nil || !fltResult {
 			return `Access denied`
 		}
@@ -895,8 +903,7 @@ func errredirTag(par parFunc) string {
 	if par.Owner.Attr[`errredirect`] == nil {
 		par.Owner.Attr[`errredirect`] = make(map[string]map[string]any)
 	}
-	par.Owner.Attr[`errredirect`].(map[string]map[string]any)[(*par.Pars)[`ErrorID`]] =
-		par.Node.Attr
+	par.Owner.Attr[`errredirect`].(map[string]map[string]any)[(*par.Pars)[`ErrorID`]] = par.Node.Attr
 	return ``
 }
 
@@ -1260,9 +1267,11 @@ type byFirst [][]string
 func (s byFirst) Len() int {
 	return len(s)
 }
+
 func (s byFirst) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
+
 func (s byFirst) Less(i, j int) bool {
 	return strings.Compare(s[i][0], s[j][0]) < 0
 }
@@ -1471,7 +1480,7 @@ func getHistoryTag(par parFunc) string {
 	data := make([][]string, 0)
 	if len(list) > 0 {
 		for i := range list {
-			item := list[i].(*types.Map)
+			item := list[i].(*compiler.Map)
 			items := make([]string, len(cols))
 			for ind, key := range cols {
 				var val string

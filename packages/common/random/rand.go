@@ -41,7 +41,6 @@ const (
 	KC_RAND_KIND_ALL   = 3 //
 )
 
-//
 func Krand(size int64, kind int) []byte {
 	ikind, kinds, result := kind, [][]int{{10, 48}, {26, 97}, {26, 65}}, make([]byte, size)
 	is_all := kind > 2 || kind < 0
@@ -56,7 +55,6 @@ func Krand(size int64, kind int) []byte {
 	return result
 }
 
-//
 func RandNumber(size int64) string {
 	result := Krand(size, KC_RAND_KIND_ALL)
 	return string(result[:])

@@ -23,6 +23,7 @@ func init() {
 	crypto.InitAsymAlgo("ECC_Secp256k1")
 	crypto.InitHashAlgo("KECCAK256")
 }
+
 func TestBin(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 	form := url.Values{`nowait`: {`nowait`}}
@@ -35,14 +36,12 @@ func TestTransferSelf(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 	form := url.Values{`nowait`: {`nowait`}}
 	assert.NoError(t, postTransferSelfTxMultipart(&form))
-
 }
 
 func TestUTXO(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 	form := url.Values{`nowait`: {`nowait`}}
 	assert.NoError(t, postUTXOTxMultipart(&form))
-
 }
 
 func TestMath(t *testing.T) {
@@ -59,9 +58,9 @@ func TestMath(t *testing.T) {
 		form := url.Values{"NewPubkey": {u}}
 		assert.NoError(t, postTx(`@1NewUser`, &form))
 	}
-	//form := url.Values{`Value`: {`[{"api_address":"http://127.0.0.1:7079","public_key":"0498b18e551493a269b6f419d7784d26c8e3555638e80897c69997ef9f211e21d5d0b8adeeaab0e0e750e720ddf3048ec55d613ba5dee3fdfd4e7c17d346731e9b","tcp_address":"127.0.0.1:7078"},{"tcp_address":"127.0.0.1:2078","api_address":"http://127.0.0.1:2079","public_key":"04d750da3e19c5f7721a1dafd8663f2739dba23d81e01f0667730d217472a3bc9f93c6fbaade9c6b6387ece296c478d25559cb87ca3e58aa7ce627dd47ec902aea"},{"tcp_address":"127.0.0.1:3078","api_address":"http://127.0.0.1:3079","public_key":"04df303174dfbc79b1e3baa196103c284b6ca97c21848511af18a401fdd1b0fb29bfd8724f43b44062ff5f67a969409ab037ae674a1010602b1a7d25245b49738c"},{"tcp_address":"127.0.0.1:4078","api_address":"http://127.0.0.1:4079","public_key":"04cbe75c40a2ef1256483c5bb910745171258b341f981598a01876fc3711c243f8fab181d72ea7abb838ad3f27e8a03b54032e8ab34656d9503539a38b05151cfa"}]`}, "Name": {"honor_nodes"}, `Conditions`: {`true`}}
+	// form := url.Values{`Value`: {`[{"api_address":"http://127.0.0.1:7079","public_key":"0498b18e551493a269b6f419d7784d26c8e3555638e80897c69997ef9f211e21d5d0b8adeeaab0e0e750e720ddf3048ec55d613ba5dee3fdfd4e7c17d346731e9b","tcp_address":"127.0.0.1:7078"},{"tcp_address":"127.0.0.1:2078","api_address":"http://127.0.0.1:2079","public_key":"04d750da3e19c5f7721a1dafd8663f2739dba23d81e01f0667730d217472a3bc9f93c6fbaade9c6b6387ece296c478d25559cb87ca3e58aa7ce627dd47ec902aea"},{"tcp_address":"127.0.0.1:3078","api_address":"http://127.0.0.1:3079","public_key":"04df303174dfbc79b1e3baa196103c284b6ca97c21848511af18a401fdd1b0fb29bfd8724f43b44062ff5f67a969409ab037ae674a1010602b1a7d25245b49738c"},{"tcp_address":"127.0.0.1:4078","api_address":"http://127.0.0.1:4079","public_key":"04cbe75c40a2ef1256483c5bb910745171258b341f981598a01876fc3711c243f8fab181d72ea7abb838ad3f27e8a03b54032e8ab34656d9503539a38b05151cfa"}]`}, "Name": {"honor_nodes"}, `Conditions`: {`true`}}
 	form := url.Values{`Value`: {`[{"api_address":"http://127.0.0.1:7079","public_key":"0498b18e551493a269b6f419d7784d26c8e3555638e80897c69997ef9f211e21d5d0b8adeeaab0e0e750e720ddf3048ec55d613ba5dee3fdfd4e7c17d346731e9b","tcp_address":"127.0.0.1:7078"},{"tcp_address":"127.0.0.1:2078","api_address":"http://127.0.0.1:2079","public_key":"04d750da3e19c5f7721a1dafd8663f2739dba23d81e01f0667730d217472a3bc9f93c6fbaade9c6b6387ece296c478d25559cb87ca3e58aa7ce627dd47ec902aea"}]`}, "Name": {"honor_nodes"}, `Conditions`: {`true`}}
-	//form := url.Values{`Value`: {`[{"api_address":"http://127.0.0.1:7079","public_key":"0498b18e551493a269b6f419d7784d26c8e3555638e80897c69997ef9f211e21d5d0b8adeeaab0e0e750e720ddf3048ec55d613ba5dee3fdfd4e7c17d346731e9b","tcp_address":"127.0.0.1:7078"},{"tcp_address":"127.0.0.1:2078","api_address":"http://127.0.0.1:2079","public_key":"04d750da3e19c5f7721a1dafd8663f2739dba23d81e01f0667730d217472a3bc9f93c6fbaade9c6b6387ece296c478d25559cb87ca3e58aa7ce627dd47ec902aea"},{"tcp_address":"127.0.0.1:3078","api_address":"http://127.0.0.1:3079","public_key":"04df303174dfbc79b1e3baa196103c284b6ca97c21848511af18a401fdd1b0fb29bfd8724f43b44062ff5f67a969409ab037ae674a1010602b1a7d25245b49738c"}]`}, "Name": {"honor_nodes"}, `Conditions`: {`true`}}
+	// form := url.Values{`Value`: {`[{"api_address":"http://127.0.0.1:7079","public_key":"0498b18e551493a269b6f419d7784d26c8e3555638e80897c69997ef9f211e21d5d0b8adeeaab0e0e750e720ddf3048ec55d613ba5dee3fdfd4e7c17d346731e9b","tcp_address":"127.0.0.1:7078"},{"tcp_address":"127.0.0.1:2078","api_address":"http://127.0.0.1:2079","public_key":"04d750da3e19c5f7721a1dafd8663f2739dba23d81e01f0667730d217472a3bc9f93c6fbaade9c6b6387ece296c478d25559cb87ca3e58aa7ce627dd47ec902aea"},{"tcp_address":"127.0.0.1:3078","api_address":"http://127.0.0.1:3079","public_key":"04df303174dfbc79b1e3baa196103c284b6ca97c21848511af18a401fdd1b0fb29bfd8724f43b44062ff5f67a969409ab037ae674a1010602b1a7d25245b49738c"}]`}, "Name": {"honor_nodes"}, `Conditions`: {`true`}}
 	assert.NoError(t, postTx(`@1UpdatePlatformParam`, &form))
 }
 
@@ -258,20 +257,24 @@ func TestHardContract(t *testing.T) {
 func TestExistContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 	rnd := `cnt` + crypto.RandSeq(4)
-	form := url.Values{"Name": {rnd}, "Value": {`contract ` + rnd + ` {
+	form := url.Values{
+		"Name": {rnd}, "Value": {`contract ` + rnd + ` {
 		data {
 			Name string
 		}
 		action {
 		Throw($Name, "Text of the error")
 	}}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
+		"ApplicationId": {`1`}, "Conditions": {`true`},
+	}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
 	assert.EqualError(t, postTx(rnd, &url.Values{"Name": {"1"}}),
 		`{"type":"exception","error":"Text of the error","id":"1"}`)
-	form = url.Values{"Name": {`EditPage`}, "Value": {`contract EditPage {action {}}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	form = url.Values{
+		"Name": {`EditPage`}, "Value": {`contract EditPage {action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`},
+	}
 
 	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"Contract EditPage already exists"}`)
 }
@@ -279,34 +282,41 @@ func TestExistContract(t *testing.T) {
 func TestDataContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 	name := `cnt` + crypto.RandSeq(4)
-	form := url.Values{"Name": {name}, "Value": {`contract ` + name + `1 {
+	form := url.Values{
+		"Name": {name}, "Value": {`contract ` + name + `1 {
 		data {Name int
 			string qwerty}
 		action {}
 		}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
+		"ApplicationId": {`1`}, "Conditions": {`true`},
+	}
 	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"expecting name of the data field [Ln:3 Col:5]"}`)
 
-	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+	form = url.Values{
+		"Name": {name}, "Value": {`contract ` + name + ` {
 		data {MyApp qwerty}
 		action {}
 		}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
+		"ApplicationId": {`1`}, "Conditions": {`true`},
+	}
 	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"expecting type of the data field [Ln:2 Col:16]"}`)
 
-	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+	form = url.Values{
+		"Name": {name}, "Value": {`contract ` + name + ` {
 		data {MyApp int
 		    Qwert}
 		action {}
 		}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
+		"ApplicationId": {`1`}, "Conditions": {`true`},
+	}
 	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"expecting type of the data field [Ln:3 Col:13]"}`)
 }
 
 func TestTypesContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 	name := `cnt` + crypto.RandSeq(4)
-	form := url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+	form := url.Values{
+		"Name": {name}, "Value": {`contract ` + name + ` {
 		data {
 			Float float
 			Addr  address
@@ -315,11 +325,14 @@ func TestTypesContract(t *testing.T) {
 		}
 		action { $result = Sprintf("%v=%v=%v=%v", $Float, $Addr, $Arr, $Map) }
 		}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
+		"ApplicationId": {`1`}, "Conditions": {`true`},
+	}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
-	_, msg, err := postTxResult(name, &url.Values{"Float": {"1.23"}, "Addr": {"-1334343423"},
-		"Arr": {`[23,"tt"]`}, "Map": {`{"k" : "v"}`}})
+	_, msg, err := postTxResult(name, &url.Values{
+		"Float": {"1.23"}, "Addr": {"-1334343423"},
+		"Arr": {`[23,"tt"]`}, "Map": {`{"k" : "v"}`},
+	})
 	assert.NoError(t, err)
 	if msg != `1.23=-1334343423=[23 tt]=map[k:v]` {
 		t.Error(`Wrong msg`, msg)
@@ -327,7 +340,6 @@ func TestTypesContract(t *testing.T) {
 }
 
 func TestNewContracts(t *testing.T) {
-
 	//wanted := func(name, want string) bool {
 	//	var ret getTestResult
 	//	return assert.NoError(t, sendPost(`test/`+name, nil, &ret)) && assert.Equal(t, want, ret.Value)
@@ -344,9 +356,11 @@ func TestNewContracts(t *testing.T) {
 		err := sendGet(`contract/`+name, nil, &ret)
 		if err != nil {
 			if strings.Contains(err.Error(), errContract.Errorf(name).Error()) {
-				form := url.Values{"Name": {name}, "Value": {strings.Replace(item.Value,
-					`#rnd#`, rnd, -1)},
-					"ApplicationId": {`1`}, "Conditions": {`true`}}
+				form := url.Values{
+					"Name": {name}, "Value": {strings.Replace(item.Value,
+						`#rnd#`, rnd, -1)},
+					"ApplicationId": {`1`}, "Conditions": {`true`},
+				}
 				if err := postTx(`NewContract`, &form); err != nil {
 					assert.EqualError(t, err, item.Params[0].Results[`error`])
 					continue
@@ -403,8 +417,10 @@ var contracts = []smartContract{
 			Test("t3", FormatMoney($num1, 1))   //1234567237,2
 		}
 	}`, []smartParams{
-		{nil, map[string]string{`result`: `123456789`,
-			`t1`: `123456723720`, `t2`: `12345672372`, `t3`: `1234567237.2`}},
+		{nil, map[string]string{
+			`result`: `123456789`,
+			`t1`:     `123456723720`, `t2`: `12345672372`, `t3`: `1234567237.2`,
+		}},
 	}},
 
 	{`StrNil`, `contract StrNil {
@@ -425,8 +441,10 @@ var contracts = []smartContract{
 		   Test("ok", JSONEncodeIndent(a, "\t"))
 		}
 	}`, []smartParams{
-		{nil, map[string]string{`ok`: "{\n\t\"ok\": 10,\n\t\"arr\": [\n\t\t\"first\",\n\t\t\"<second>\"\n\t]\n}",
-			`json`: "{\"ok\":10,\"arr\":[\"first\",\"<second>\"]}"}},
+		{nil, map[string]string{
+			`ok`:   "{\n\t\"ok\": 10,\n\t\"arr\": [\n\t\t\"first\",\n\t\t\"<second>\"\n\t]\n}",
+			`json`: "{\"ok\":10,\"arr\":[\"first\",\"<second>\"]}",
+		}},
 	}},
 	{`GuestKey`, `contract GuestKey {
 		action {
@@ -458,7 +476,8 @@ var contracts = []smartContract{
 	}`, []smartParams{
 		{nil, map[string]string{`size`: `4`, `end`: `2`}},
 	}},
-	{`TestDBFindOK`, `
+	{
+		`TestDBFindOK`, `
 			contract TestDBFindOK {
 			action {
 				var ret array
@@ -527,9 +546,12 @@ var contracts = []smartContract{
 			}
 		}`,
 		[]smartParams{
-			{nil, map[string]string{`0`: `1`, `1`: `1`, `2`: `2`, `3`: `2`, `4`: `1`, `5`: `4`,
-				`6`: `7`, `7`: `5`, `8`: `3`, `255`: `255`}},
-		}},
+			{nil, map[string]string{
+				`0`: `1`, `1`: `1`, `2`: `2`, `3`: `2`, `4`: `1`, `5`: `4`,
+				`6`: `7`, `7`: `5`, `8`: `3`, `255`: `255`,
+			}},
+		},
+	},
 	{`DBFindCol`, `contract DBFindCol {
 		action {
 			var ret string
@@ -672,14 +694,17 @@ var contracts = []smartContract{
 		}}`, []smartParams{
 		{nil, map[string]string{`float2`: `1 -3.670000`, `float3`: `1.53 1.43`, `float4`: `17.00 6.90 12.50`, `float5`: `false true false true true`}},
 	}},
-	{`Crash`, `contract Crash { data {} conditions {} action
+	{
+		`Crash`, `contract Crash { data {} conditions {} action
 
 			{ $result=DBUpdate("menu", 1, {"value": "updated"}) }
 			}`,
 		[]smartParams{
 			{nil, map[string]string{`error`: `{"type":"panic","error":"Access denied"}`}},
-		}},
-	{`TestOneInput`, `contract TestOneInput {
+		},
+	},
+	{
+		`TestOneInput`, `contract TestOneInput {
 			data {
 				list array
 			}
@@ -691,16 +716,20 @@ var contracts = []smartContract{
 		}`,
 		[]smartParams{
 			{map[string]string{`list`: `Input value`}, map[string]string{`oneinput`: `Input valuemoney`}},
-		}},
-	{`DBProblem`, `contract DBProblem {
+		},
+	},
+	{
+		`DBProblem`, `contract DBProblem {
 		action{
 			DBFind("members1").Where({"member_name": "name"})
 		}
 	}`,
 		[]smartParams{
 			{nil, map[string]string{`error`: `{"type":"panic","error":"pq: current transaction is aborted, commands ignored until end of transaction block"}`}},
-		}},
-	{`TestMultiForm`, `contract TestMultiForm {
+		},
+	},
+	{
+		`TestMultiForm`, `contract TestMultiForm {
 				data {
 					list array
 				}
@@ -710,17 +739,21 @@ var contracts = []smartContract{
 			}`,
 		[]smartParams{
 			{map[string]string{`list[]`: `2`, `list[0]`: `start`, `list[1]`: `finish`}, map[string]string{`multiform`: `startfinish`}},
-		}},
-	{`errTestMessage`, `contract errTestMessage {
+		},
+	},
+	{
+		`errTestMessage`, `contract errTestMessage {
 			conditions {
 			}
 			action { qvar ivar int}
 		}`,
 		[]smartParams{
 			{nil, map[string]string{`error`: `{"type":"panic","error":"unknown variable qvar"}`}},
-		}},
+		},
+	},
 
-	{`EditProfile9`, `contract EditProfile9 {
+	{
+		`EditProfile9`, `contract EditProfile9 {
 			data {
 			}
 			conditions {
@@ -735,18 +768,24 @@ var contracts = []smartContract{
 		}`,
 		[]smartParams{
 			{nil, map[string]string{`edit`: `edit value 0`, `split`: `point 2`}},
-		}},
-	{`testEmpty`, `contract testEmpty {
+		},
+	},
+	{
+		`testEmpty`, `contract testEmpty {
 					action { Test("empty",  "empty value")}}`,
 		[]smartParams{
 			{nil, map[string]string{`empty`: `empty value`}},
-		}},
-	{`testUpd`, `contract testUpd {
+		},
+	},
+	{
+		`testUpd`, `contract testUpd {
 						action { Test("date",  "-2006.01.02-")}}`,
 		[]smartParams{
 			{nil, map[string]string{`date`: `-` + time.Now().Format(`2006.01.02`) + `-`}},
-		}},
-	{`testLong`, `contract testLong {
+		},
+	},
+	{
+		`testLong`, `contract testLong {
 			action { Test("long",  "long result")
 				$result = DBFind("contracts").WhereId(2).One("value") + DBFind("contracts").WhereId(4).One("value")
 				Println("Result", $result)
@@ -754,8 +793,10 @@ var contracts = []smartContract{
 			}}`,
 		[]smartParams{
 			{nil, map[string]string{`long`: `long result`}},
-		}},
-	{`testSimple`, `contract testSimple {
+		},
+	},
+	{
+		`testSimple`, `contract testSimple {
 					data {
 						Amount int
 						Name   string
@@ -765,23 +806,34 @@ var contracts = []smartContract{
 					}
 					action { Test("sact", $Name, $Amount)}}`,
 		[]smartParams{
-			{map[string]string{`Name`: `Simple name`, `Amount`: `-56781`},
-				map[string]string{`scond`: `-56781Simple name`,
-					`sact`: `Simple name-56781`}},
-		}},
-	{`errTestVar`, `contract errTestVar {
+			{
+				map[string]string{`Name`: `Simple name`, `Amount`: `-56781`},
+				map[string]string{
+					`scond`: `-56781Simple name`,
+					`sact`:  `Simple name-56781`,
+				},
+			},
+		},
+	},
+	{
+		`errTestVar`, `contract errTestVar {
 				conditions {
 				}
 				action { var ivar int}
 			}`,
-		nil},
-	{`testGetContract`, `contract testGetContract {
+		nil,
+	},
+	{
+		`testGetContract`, `contract testGetContract {
 			action { Test("ByName", GetContractByName(""), GetContractByName("ActivateContract"))
 				Test("ById", GetContractById(10000000), GetContractById(16))}}`,
 		[]smartParams{
-			{nil, map[string]string{`ByName`: `0 4`,
-				`ById`: `EditTable`}},
-		}},
+			{nil, map[string]string{
+				`ByName`: `0 4`,
+				`ById`:   `EditTable`,
+			}},
+		},
+	},
 	{
 		`testDateTime`, `contract testDateTime {
 				data {
@@ -811,7 +863,6 @@ func timeMustParse(value string) string {
 }
 
 func TestEditContracts(t *testing.T) {
-
 	//wanted := func(name, want string) bool {
 	//	var ret getTestResult
 	//	err := sendPost(`test/`+name, nil, &ret)
@@ -894,8 +945,10 @@ func TestNewTableWithEmptyName(t *testing.T) {
 
 	require.NoError(t, postTx("NewTable", &form))
 
-	form = url.Values{"TableName": {name}, "Name": {sql2},
-		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {"true"}}
+	form = url.Values{
+		"TableName": {name}, "Name": {sql2},
+		"Type": {"varchar"}, "Index": {"0"}, "Permissions": {"true"},
+	}
 	assert.NoError(t, postTx(`NewColumn`, &form))
 
 	form = url.Values{
@@ -921,7 +974,6 @@ func TestNewTableWithEmptyName(t *testing.T) {
 }
 
 func TestContracts(t *testing.T) {
-
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return
@@ -987,8 +1039,7 @@ func TestSignature(t *testing.T) {
 	}
 }
 
-var (
-	imp = `{
+var imp = `{
 		"menus": [
 			{
 				"Name": "test_%s",
@@ -1058,7 +1109,6 @@ var (
 			}
 		]
 }`
-)
 
 func TestImport(t *testing.T) {
 	if err := keyLogin(1); err != nil {
@@ -1072,7 +1122,6 @@ func TestImport(t *testing.T) {
 		t.Error(err)
 		return
 	}
-
 }
 
 func TestEditContracts_ChangeWallet(t *testing.T) {
@@ -1340,11 +1389,13 @@ func TestContractChain(t *testing.T) {
 	}
 	rnd := `rnd` + crypto.RandSeq(4)
 
-	form := url.Values{"Name": {rnd}, "ApplicationId": {"1"}, "Columns": {`[{"name":"value","type":"varchar", "index": "0", 
+	form := url.Values{
+		"Name": {rnd}, "ApplicationId": {"1"}, "Columns": {`[{"name":"value","type":"varchar", "index": "0", 
 	  "conditions":"true"},
 	{"name":"amount", "type":"number","index": "0", "conditions":"true"},
 	{"name":"dt","type":"datetime", "index": "0", "conditions":"true"}]`},
-		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`},
+	}
 	err := postTx(`NewTable`, &form)
 	if err != nil {
 		t.Error(err)
@@ -1459,12 +1510,16 @@ func TestLoopCond(t *testing.T) {
 	}
 	assert.EqualError(t, postTx(rnd+`2`, &url.Values{}), `{"type":"panic","error":"There is loop in `+rnd+`1 contract"}`)
 
-	form = url.Values{"Name": {`ecosystems`}, "InsertPerm": {`ContractConditions("MainCondition")`},
+	form = url.Values{
+		"Name": {`ecosystems`}, "InsertPerm": {`ContractConditions("MainCondition")`},
 		"UpdatePerm":    {`EditEcosysName(1, "HANG")`},
-		"NewColumnPerm": {`ContractConditions("MainCondition")`}}
+		"NewColumnPerm": {`ContractConditions("MainCondition")`},
+	}
 	assert.NoError(t, postTx(`EditTable`, &form))
-	assert.EqualError(t, postTx(`EditEcosystemName`, &url.Values{"EcosystemID": {`1`},
-		"NewName": {`Hang`}}), `{"type":"panic","error":"There is loop in EditEcosysName contract"}`)
+	assert.EqualError(t, postTx(`EditEcosystemName`, &url.Values{
+		"EcosystemID": {`1`},
+		"NewName":     {`Hang`},
+	}), `{"type":"panic","error":"There is loop in EditEcosysName contract"}`)
 
 	form = url.Values{`Value`: {`contract ` + rnd + `shutdown {
 		action
@@ -1513,10 +1568,13 @@ func TestRand(t *testing.T) {
 		t.Errorf(`%s!=%s`, val1, val2)
 	}
 }
+
 func TestKillNode(t *testing.T) {
 	require.NoError(t, keyLogin(1))
-	form := url.Values{"Name": {`MyTestContract1`}, "Value": {`contract MyTestContract1 {action {}}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}, "nowait": {`true`}}
+	form := url.Values{
+		"Name": {`MyTestContract1`}, "Value": {`contract MyTestContract1 {action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}, "nowait": {`true`},
+	}
 	require.NoError(t, postTx(`NewContract`, &form))
 	require.NoError(t, postTx("Kill", &url.Values{"nowait": {`true`}}))
 }
@@ -1646,18 +1704,19 @@ func TestCost(t *testing.T) {
 	require.NoError(t, postTx(name+`1`, &url.Values{}))
 	require.NoError(t, postTx(name+`2`, &url.Values{}))
 	t.Error(`OK`)
-
 }
 
 func TestHard(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 	name := randName(`h`)
-	form := url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+	form := url.Values{
+		"Name": {name}, "Value": {`contract ` + name + ` {
 		data {
 			Par int
 		}
 		action {}}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
+		"ApplicationId": {`1`}, "Conditions": {`true`},
+	}
 	_, msg, err := postTxResult(`NewContract`, &form)
 	require.NoError(t, err)
 	fmt.Println(`MSg=`, msg, name)
@@ -1769,7 +1828,8 @@ func TestExternalNetwork(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 	var form url.Values
 	name := `cnt` + crypto.RandSeq(4)
-	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Hashes {
+	form = url.Values{
+		"Name": {name}, "Value": {`contract ` + name + `Hashes {
 		data {
 			hash string
 			block int
@@ -1782,10 +1842,12 @@ func TestExternalNetwork(t *testing.T) {
 			}
 		}
 	}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
+		"ApplicationId": {`1`}, "Conditions": {`true`},
+	}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
-	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Result {
+	form = url.Values{
+		"Name": {name}, "Value": {`contract ` + name + `Result {
 		data {
 			UID  string
 			Status int
@@ -1796,10 +1858,12 @@ func TestExternalNetwork(t *testing.T) {
 			Println("Result Contract", $UID, $Status, $Block, $Msg )
 		}
 	}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
+		"ApplicationId": {`1`}, "Conditions": {`true`},
+	}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
-	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Errors {
+	form = url.Values{
+		"Name": {name}, "Value": {`contract ` + name + `Errors {
 		data {
 			hash string
 			block int
@@ -1812,10 +1876,12 @@ func TestExternalNetwork(t *testing.T) {
 			$result = 1/0
 		}
 	}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
+		"ApplicationId": {`1`}, "Conditions": {`true`},
+	}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
-	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `2 {
+	form = url.Values{
+		"Name": {name}, "Value": {`contract ` + name + `2 {
 		action { 
 			var params map
 			params["hash"] = PubToHex($txhash)
@@ -1830,11 +1896,13 @@ func TestExternalNetwork(t *testing.T) {
 			    params, "@1` + name + `Result")
 		}
 	}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
+		"ApplicationId": {`1`}, "Conditions": {`true`},
+	}
 	assert.NoError(t, postTx(`NewContract`, &form))
 	assert.NoError(t, postTx(name+`2`, &url.Values{}))
 
-	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `3 {
+	form = url.Values{
+		"Name": {name}, "Value": {`contract ` + name + `3 {
 		action { 
 			var params map
 			params["hash"] = PubToHex($txhash)
@@ -1843,7 +1911,8 @@ func TestExternalNetwork(t *testing.T) {
 			    params, "@1None")
 		}
 	}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
+		"ApplicationId": {`1`}, "Conditions": {`true`},
+	}
 	assert.NoError(t, postTx(`NewContract`, &form))
 	assert.NoError(t, postTx(name+`3`, &url.Values{}))
 }
@@ -1851,7 +1920,8 @@ func TestExternalNetwork(t *testing.T) {
 func TestApos(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 	name := randName(`cnt`)
-	form := url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+	form := url.Values{
+		"Name": {name}, "Value": {`contract ` + name + ` {
 		data {
 			Address string
 		}
@@ -1866,7 +1936,8 @@ func TestApos(t *testing.T) {
 			m["memb'er_info->ne'wq"] = "stop'"
 			DBUpdate("members", id, m)
 		}}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
+		"ApplicationId": {`1`}, "Conditions": {`true`},
+	}
 	assert.NoError(t, postTx(`NewContract`, &form))
 	assert.NoError(t, postTx(name, &url.Values{`Address`: {"Name d'Company"}}))
 }
@@ -1876,21 +1947,25 @@ func TestCondition(t *testing.T) {
 	var form url.Values
 
 	name := `cnt` + crypto.RandSeq(4)
-	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+	form = url.Values{
+		"Name": {name}, "Value": {`contract ` + name + ` {
 		action { 
 			Println("COND" )
 		}
 	}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
+		"ApplicationId": {`1`}, "Conditions": {`true`},
+	}
 	assert.NoError(t, postTx(`NewContract`, &form))
-	form = url.Values{"Name": {name + `2`}, "Value": {`contract ` + name + `2 {
+	form = url.Values{
+		"Name": {name + `2`}, "Value": {`contract ` + name + `2 {
 		conditions {
 		}
 		action { 
 			Println("COND 2" )
 		}
 	}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
+		"ApplicationId": {`1`}, "Conditions": {`true`},
+	}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
 	assert.NoError(t, postTx(`NewPage`, &url.Values{

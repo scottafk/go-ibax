@@ -8,7 +8,7 @@ package daemons
 import (
 	"encoding/hex"
 
-	"github.com/IBAX-io/go-ibax/packages/script"
+	"github.com/IBAX-io/needle/vm"
 
 	"github.com/IBAX-io/go-ibax/packages/types"
 
@@ -55,11 +55,11 @@ func (dtx *DelayedTx) RunForDelayBlockID(blockID int64) ([]*sqldb.Transaction, e
 }
 
 func (dtx *DelayedTx) createDelayTxByItem(name string, keyID, highRate int64) (*sqldb.Transaction, error) {
-	vm := script.GetVM()
+	vm := vm.GetVM()
 	contract := smart.VMGetContract(vm, name, uint32(firstEcosystemID))
 	smartTx := types.SmartTransaction{
 		Header: &types.Header{
-			ID:          int(contract.Info().ID),
+			ID:          int(contract.Info().Id),
 			EcosystemID: firstEcosystemID,
 			KeyID:       keyID,
 			Time:        dtx.time,

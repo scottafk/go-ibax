@@ -98,7 +98,6 @@ func WriteResponse(w http.ResponseWriter, request *Request, result any, e *Error
 	if f, ok := w.(http.Flusher); ok {
 		f.Flush()
 	}
-
 }
 
 func generateResponse(request *Request, result any, e *Error) any {
@@ -127,7 +126,7 @@ func WriteBatchResponse(w http.ResponseWriter, resp any) {
 	}
 	w.Header().Set("content-length", strconv.Itoa(len(b)))
 	w.Header().Set("Content-Type", "application/json")
-	//w.Header().Set("transfer-encoding", "identity")
+	// w.Header().Set("transfer-encoding", "identity")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(b)
 	if f, ok := w.(http.Flusher); ok {

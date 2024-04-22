@@ -16,12 +16,12 @@ type Model interface {
 	GetHostWithMaxID() (hosts []string, err error)
 }
 
-type HonorNodeMode struct {
-}
+type HonorNodeMode struct{}
 
 func (honorNodeMode *HonorNodeMode) GetThisNodePosition() (int64, error) {
 	return syspar.GetNodePositionByPublicKey(syspar.GetNodePubKey())
 }
+
 func (honorNodeMode *HonorNodeMode) GetHostWithMaxID() ([]string, error) {
 	nbs := node.GetNodesBanService()
 	hosts, err := nbs.FilterBannedHosts(syspar.GetRemoteHosts())
@@ -32,12 +32,12 @@ func (honorNodeMode *HonorNodeMode) GetHostWithMaxID() ([]string, error) {
 	return hosts, nil
 }
 
-type CandidateNodeMode struct {
-}
+type CandidateNodeMode struct{}
 
 func (candidateNodeMode *CandidateNodeMode) GetThisNodePosition() (int64, error) {
 	return GetCandidateNodePositionByPublicKey()
 }
+
 func (candidateNodeMode *CandidateNodeMode) GetHostWithMaxID() ([]string, error) {
 	candidateNodes, err := sqldb.GetCandidateNode(syspar.SysInt(syspar.NumberNodes))
 	if err != nil {
@@ -52,21 +52,21 @@ func (candidateNodeMode *CandidateNodeMode) GetHostWithMaxID() ([]string, error)
 	return hosts, nil
 }
 
-type SelectModel struct {
-}
+type SelectModel struct{}
 
 func (s *SelectModel) GetThisNodePosition() (int64, error) {
 	return s.GetWorkMode().GetThisNodePosition()
 }
+
 func (s *SelectModel) GetHostWithMaxID() ([]string, error) {
 	return s.GetWorkMode().GetHostWithMaxID()
 }
 
 func (s SelectModel) GetWorkMode() Model {
 	if syspar.IsHonorNodeMode() {
-		return &HonorNodeMode{} //1
+		return &HonorNodeMode{} // 1
 	}
-	return &CandidateNodeMode{} //2
+	return &CandidateNodeMode{} // 2
 }
 
 func GetCandidateNodePositionByPublicKey() (int64, error) {
@@ -84,6 +84,7 @@ func GetCandidateNodePositionByPublicKey() (int64, error) {
 
 	return candidateNode.ID, nil
 }
+
 func GetCandidateNodes() (sqldb.CandidateNodes, error) {
 	nodePublicKey := hex.EncodeToString(syspar.GetNodePubKey())
 	if len(nodePublicKey) < 1 {

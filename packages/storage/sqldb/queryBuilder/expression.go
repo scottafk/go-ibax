@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/IBAX-io/go-ibax/packages/converter"
-	"github.com/IBAX-io/go-ibax/packages/types"
+	"github.com/IBAX-io/needle/compiler"
 )
 
 func GetOrder(tblname string, inOrder any, withDefault bool) (string, error) {
@@ -16,7 +16,7 @@ func GetOrder(tblname string, inOrder any, withDefault bool) (string, error) {
 			`members`: "ecosystem,id",
 		}
 	)
-	cols := types.NewMap()
+	cols := compiler.NewMap()
 
 	sanitize := func(in string, value any) {
 		in = converter.Sanitize(strings.ToLower(in), ``)
@@ -47,7 +47,7 @@ func GetOrder(tblname string, inOrder any, withDefault bool) (string, error) {
 	switch v := inOrder.(type) {
 	case string:
 		sanitize(v, nil)
-	case *types.Map:
+	case *compiler.Map:
 		for _, ikey := range v.Keys() {
 			item, _ := v.Get(ikey)
 			sanitize(ikey, item)
@@ -61,7 +61,7 @@ func GetOrder(tblname string, inOrder any, withDefault bool) (string, error) {
 			switch param := item.(type) {
 			case string:
 				sanitize(param, nil)
-			case *types.Map:
+			case *compiler.Map:
 				for _, ikey := range param.Keys() {
 					item, _ := param.Get(ikey)
 					sanitize(ikey, item)

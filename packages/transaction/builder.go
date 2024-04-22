@@ -23,7 +23,6 @@ func newTransaction(smartTx types.SmartTransaction, privateKey []byte, internal 
 	}
 	hash = stp.Hash
 	return
-
 }
 
 func NewInternalTransaction(smartTx types.SmartTransaction, privateKey []byte) (data, hash []byte, err error) {
@@ -53,7 +52,6 @@ func CreateTransaction(data, hash []byte, keyID, tnow int64) error {
 
 // CreateDelayTransactionHighRate creates transaction
 func CreateDelayTransactionHighRate(data, hash []byte, keyID, highRate int64) *sqldb.Transaction {
-
 	t := int8(highRate)
 	tx := &sqldb.Transaction{
 		Hash:     hash,

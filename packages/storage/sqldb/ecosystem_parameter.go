@@ -9,9 +9,7 @@ import (
 	"github.com/IBAX-io/go-ibax/packages/converter"
 )
 
-var (
-	EcosystemWallet = "ecosystem_wallet"
-)
+var EcosystemWallet = "ecosystem_wallet"
 
 // StateParameter is model
 type StateParameter struct {
@@ -47,7 +45,7 @@ func (sp *StateParameter) GetAllStateParameters(offset, limit *int, names []stri
 	q := DBConn.Table(sp.TableName()).Where(`ecosystem = ?`, sp.ecosystem)
 
 	if len(names) > 0 {
-		//if any select names,then all return
+		// if any select names,then all return
 		q.Where("name IN ?", names)
 	} else {
 		if offset != nil {

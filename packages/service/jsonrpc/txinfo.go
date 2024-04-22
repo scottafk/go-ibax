@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
+
 	"github.com/IBAX-io/go-ibax/packages/block"
 	"github.com/IBAX-io/go-ibax/packages/common"
 	"github.com/IBAX-io/go-ibax/packages/converter"
@@ -33,8 +34,7 @@ type MultiTxInfoResult struct {
 	Results map[string]*TxInfoResult `json:"results"`
 }
 
-type TxDetailResult struct {
-}
+type TxDetailResult struct{}
 
 func getTxInfo(txHash string, getInfo bool) (*TxInfoResult, error) {
 	var status TxInfoResult
@@ -88,7 +88,7 @@ func transactionData(blockId int64, txHash string) (*smart.TxInfo, error) {
 
 	for _, tx := range blck.Transactions {
 		hashStr := hex.EncodeToString(tx.Hash())
-		//find next
+		// find next
 		if hashStr != txHash {
 			continue
 		}
@@ -112,7 +112,7 @@ func transactionData(blockId int64, txHash string) (*smart.TxInfo, error) {
 				info.Params["utxo"] = tx.SmartContract().TxSmart.UTXO
 			}
 		}
-		//find out break
+		// find out break
 		break
 
 	}

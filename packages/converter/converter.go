@@ -134,7 +134,6 @@ func DecodeLenInt64Buf(buf *bytes.Buffer) (int64, error) {
 	copy(data, buf.Next(length))
 
 	return int64(binary.LittleEndian.Uint64(data)), nil
-
 }
 
 // DecodeLength decodes []byte to int64 and shifts buf. Bytes must be encoded with EncodeLength function.
@@ -354,7 +353,6 @@ func BinUnmarshalBuff(buf *bytes.Buffer, v any) error {
 		return fmt.Errorf(`unsupported type of BinUnmarshal %v`, t.Kind())
 	}
 	return nil
-
 }
 
 // BinUnmarshal converts []byte slice which has been made with BinMarshal to v
@@ -615,7 +613,7 @@ func InterfaceToStr(v any) (string, error) {
 		str = string(v.([]byte))
 	default:
 		if reflect.TypeOf(v).String() == `map[string]interface {}` ||
-			reflect.TypeOf(v).String() == `*types.Map` {
+			reflect.TypeOf(v).String() == `*compiler.Map` {
 			if out, err := json.Marshal(v); err != nil {
 				log.WithFields(log.Fields{"error": err, "type": consts.JSONMarshallError}).Error("marshalling map for jsonb")
 				return ``, err
@@ -754,8 +752,8 @@ func EncodeLengthPlusData(idata any) []byte {
 	case []byte:
 		data = idata.([]byte)
 	}
-	//log.Debug("data: %x", data)
-	//log.Debug("len data: %d", len(data))
+	// log.Debug("data: %x", data)
+	// log.Debug("len data: %d", len(data))
 	return append(EncodeLength(int64(len(data))), data...)
 }
 
@@ -829,7 +827,7 @@ func SubNodeParseTable(tblname string, defaultEcosystem int64) string {
 		}
 		name = tblname
 	}
-	//return strings.ToLower(fmt.Sprintf(`%d_%s`, ecosystem, Sanitize(name, ``)))
+	// return strings.ToLower(fmt.Sprintf(`%d_%s`, ecosystem, Sanitize(name, ``)))
 	return strings.ToLower(fmt.Sprintf(`%s`, Sanitize(name, ``)))
 }
 
@@ -857,7 +855,6 @@ func SortMap(m map[int64]string) []map[int64]string {
 
 // RSortMap sorts map to the reversed slice of maps
 func RSortMap(m map[int64]string) []map[int64]string {
-
 	var keys []int
 	for k := range m {
 		keys = append(keys, int(k))
@@ -951,10 +948,10 @@ func NumString(in string) string {
 }
 
 func Round(num float64) int64 {
-	//log.Debug("num", num)
-	//num += ROUND_FIX
+	// log.Debug("num", num)
+	// num += ROUND_FIX
 	//	return int(StrToFloat64(Float64ToStr(num)) + math.Copysign(0.5, num))
-	//log.Debug("num", num)
+	// log.Debug("num", num)
 	return int64(num + math.Copysign(0.5, num))
 }
 
@@ -967,10 +964,10 @@ func RoundWithPrecision(num float64, precision int) float64 {
 
 // RoundWithoutPrecision is round float64 without precision
 func RoundWithoutPrecision(num float64) int64 {
-	//log.Debug("num", num)
-	//num += ROUND_FIX
+	// log.Debug("num", num)
+	// num += ROUND_FIX
 	//	return int(StrToFloat64(Float64ToStr(num)) + math.Copysign(0.5, num))
-	//log.Debug("num", num)
+	// log.Debug("num", num)
 	return int64(num + math.Copysign(0.5, num))
 }
 
@@ -1006,8 +1003,10 @@ func ValueToInt(v any) (ret int64, err error) {
 		err = fmt.Errorf(`%v is not a valid integer`, val)
 	}
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err,
-			"value": fmt.Sprint(v)}).Error("converting value to int")
+		log.WithFields(log.Fields{
+			"type": consts.ConversionError, "error": err,
+			"value": fmt.Sprint(v),
+		}).Error("converting value to int")
 	}
 	return
 }

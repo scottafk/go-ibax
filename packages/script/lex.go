@@ -146,7 +146,8 @@ var (
 		`break`:      keyBreak,
 		`continue`:   keyContinue,
 		`var`:        keyVar,
-		`...`:        keyTail}
+		`...`:        keyTail,
+	}
 
 	// list of available types
 	// The list of types which save the corresponding 'reflect' type

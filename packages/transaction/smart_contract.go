@@ -9,12 +9,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/IBAX-io/needle/vm"
+
 	"github.com/IBAX-io/go-ibax/packages/common/crypto"
 	"github.com/IBAX-io/go-ibax/packages/conf/syspar"
 	"github.com/IBAX-io/go-ibax/packages/consts"
 	"github.com/IBAX-io/go-ibax/packages/converter"
 	"github.com/IBAX-io/go-ibax/packages/pbgo"
-	"github.com/IBAX-io/go-ibax/packages/script"
 	"github.com/IBAX-io/go-ibax/packages/smart"
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
 	"github.com/IBAX-io/go-ibax/packages/types"
@@ -38,6 +39,7 @@ func (s *SmartTransactionParser) txExpedite() decimal.Decimal {
 	dec, _ := decimal.NewFromString(s.TxSmart.Expedite)
 	return dec
 }
+
 func (s *SmartTransactionParser) setTimestamp() {
 	s.Timestamp = time.Now().UnixMilli()
 }
@@ -50,7 +52,7 @@ func (s *SmartTransactionParser) Init(t *InToCxt) error {
 	s.Notifications = t.Notifications
 	s.DbTransaction = t.DbTransaction
 	s.TxSize = int64(len(s.Payload))
-	s.VM = script.GetVM()
+	s.VM = vm.GetVM()
 	s.CLB = false
 	s.Rollback = true
 	s.SysUpdate = false
@@ -113,7 +115,7 @@ func (s *SmartTransactionParser) Action(in *InToCxt, out *OutCtx) (err error) {
 			WithOutCtxTxOutputs(s.TxOutputsMap),
 			WithOutCtxTxInputs(s.TxInputsMap),
 		)
-		//in.DbTransaction.BinLogSql = s.DbTransaction.BinLogSql
+		// in.DbTransaction.BinLogSql = s.DbTransaction.BinLogSql
 	}()
 
 	_transferSelf := s.TxSmart.TransferSelf
@@ -224,16 +226,16 @@ func (s *SmartTransactionParser) parseFromContract(fillData bool) error {
 
 	s.TxContract = contract
 	s.TxData = make(map[string]any)
-	txInfo := contract.Info().Tx
+	field := contract.Info().Field
 
-	if txInfo != nil {
+	if field != nil {
 		if fillData {
 			for k := range smartTx.Params {
 				if _, ok := contract.Info().TxMap()[k]; !ok {
 					return fmt.Errorf("'%s' parameter is not required", k)
 				}
 			}
-			if s.TxData, err = smart.FillTxData(*txInfo, smartTx.Params); err != nil {
+			if s.TxData, err = smart.FillTxData(*field, smartTx.Params); err != nil {
 				return errors.Wrap(err, fmt.Sprintf("contract '%s'", contract.Name))
 			}
 		} else {
@@ -288,6 +290,6 @@ type TxOutCtx struct {
 	SysTableColBytea bool
 	Flush            bool
 	FlushRollback    []*smart.FlushInfo
-	VM               *script.VM
-	VM2              *script.VM
+	VM               *vm.VM
+	VM2              *vm.VM
 }

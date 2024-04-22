@@ -16,7 +16,7 @@ import (
 )
 
 func TestEscape(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		Source   string
 		Expected template.HTML
 	}{

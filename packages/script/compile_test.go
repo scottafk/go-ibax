@@ -48,8 +48,10 @@ func getArray() []any {
 	myMap := types.NewMap()
 	myMap.Set(`par0`, `Parameter 0`)
 	myMap.Set(`par1`, `Parameter 1`)
-	return []any{myMap,
-		"The second string", int64(2000)}
+	return []any{
+		myMap,
+		"The second string", int64(2000),
+	}
 }
 
 // Str converts the value to a string
@@ -680,10 +682,15 @@ func TestVMCompile(t *testing.T) {
 	}
 	vm := NewVM()
 	vm.Extern = true
-	vm.Extend(&ExtendData{map[string]any{"Println": fmt.Println, "Sprintf": fmt.Sprintf,
-		"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray, "outMap": outMap,
-		"str": str, "Money": Money, "Replace": strings.Replace}, nil,
-		map[string]struct{}{"Sprintf": {}}})
+	vm.Extend(&ExtendData{
+		map[string]any{
+			"Println": fmt.Println, "Sprintf": fmt.Sprintf,
+			"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray, "outMap": outMap,
+			"str": str, "Money": Money, "Replace": strings.Replace,
+		},
+		nil,
+		map[string]struct{}{"Sprintf": {}},
+	})
 
 	for ikey, item := range test {
 		if ikey > 100 {
@@ -703,7 +710,8 @@ func TestVMCompile(t *testing.T) {
 				`rt_state`: uint32(ikey) + 22, `data`: make([]any, 0),
 				`test1`: 101, `test2`: `test 2`,
 				"glob": glob,
-				`test3`: func(param int64) string {
+				`test3`: func(param int) string {
+					fmt.Println(fmt.Sprintf("test=%d=test", param))
 					return fmt.Sprintf("test=%d=test", param)
 				},
 			}); err == nil {
@@ -721,7 +729,9 @@ func TestVMCompile(t *testing.T) {
 }
 
 func TestContractList(t *testing.T) {
-	test := []TestLexeme{{`contract NewContract {
+	test := []TestLexeme{
+		{
+			`contract NewContract {
 		conditions {
 			ValidateCondition($Conditions,$ecosystem_id)
 			while i < Len(list) {
@@ -736,8 +746,10 @@ func TestContractList(t *testing.T) {
 			return  SysParamInt("price_create_contract")
 		}
 	}func MyFunc {}`,
-		`NewContract,MyFunc`},
-		{`contract demo_contract {
+			`NewContract,MyFunc`,
+		},
+		{
+			`contract demo_contract {
 			data {
 				contract_txt str
 			}
@@ -749,7 +761,8 @@ func TestContractList(t *testing.T) {
 				}
 			}
 		} contract another_contract {} func main { func subfunc(){}}`,
-			`demo_contract,another_contract,main`},
+			`demo_contract,another_contract,main`,
+		},
 	}
 	for _, item := range test {
 		list, _ := ContractsList(item.Input)

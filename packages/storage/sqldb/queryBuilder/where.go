@@ -11,12 +11,10 @@ import (
 	"strings"
 
 	"github.com/IBAX-io/go-ibax/packages/converter"
-	"github.com/IBAX-io/go-ibax/packages/types"
+	"github.com/IBAX-io/needle/compiler"
 )
 
-var (
-	errWhereFalse = errors.New(`false result`)
-)
+var errWhereFalse = errors.New(`false result`)
 
 func PrepareWhere(where string) string {
 	whereSlice := regexp.MustCompile(`->([\w\d_]+)`).FindAllStringSubmatchIndex(where, -1)
@@ -51,13 +49,13 @@ func PrepareWhere(where string) string {
 	return where
 }
 
-func GetWhere(inWhere *types.Map) (string, error) {
+func GetWhere(inWhere *compiler.Map) (string, error) {
 	var (
 		where string
 		cond  []string
 	)
 	if inWhere == nil {
-		inWhere = types.NewMap()
+		inWhere = compiler.NewMap()
 	}
 	escape := func(value any) string {
 		return strings.Replace(fmt.Sprint(value), `'`, `''`, -1)
@@ -100,7 +98,7 @@ func GetWhere(inWhere *types.Map) (string, error) {
 			var list []string
 			for _, ival := range value {
 				switch avalue := ival.(type) {
-				case *types.Map:
+				case *compiler.Map:
 					where, err := GetWhere(avalue)
 					if err != nil {
 						return ``, err
@@ -169,7 +167,7 @@ func GetWhere(inWhere *types.Map) (string, error) {
 				var acond []string
 				for _, iarr := range value {
 					switch avalue := iarr.(type) {
-					case *types.Map:
+					case *compiler.Map:
 						ret, err := GetWhere(avalue)
 						if err == errWhereFalse {
 							acond = append(acond, ret)
@@ -186,7 +184,7 @@ func GetWhere(inWhere *types.Map) (string, error) {
 				if len(acond) > 0 {
 					cond = append(cond, fmt.Sprintf(`(%s)`, strings.Join(acond, ` and `)))
 				}
-			case *types.Map:
+			case *compiler.Map:
 				ret, err := GetWhere(value)
 				if err == errWhereFalse {
 					cond = append(cond, ret)

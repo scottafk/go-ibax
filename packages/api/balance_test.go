@@ -63,5 +63,4 @@ func TestMoneyMoreSend(t *testing.T) {
 		t.Error(err)
 		return
 	}
-
 }

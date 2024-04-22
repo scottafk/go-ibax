@@ -11,8 +11,10 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
-var DBlevel *leveldb.DB
-var GLeveldbIsactive bool
+var (
+	DBlevel          *leveldb.DB
+	GLeveldbIsactive bool
+)
 
 type levelDBGetterPutterDeleter interface {
 	Get([]byte, *opt.ReadOptions) ([]byte, error)
@@ -55,17 +57,16 @@ func Struct2Map(obj any) map[string]any {
 	t := reflect.TypeOf(obj)
 	v := reflect.ValueOf(obj)
 
-	var data = make(map[string]any)
+	data := make(map[string]any)
 	for i := 0; i < t.NumField(); i++ {
 		data[t.Field(i).Name] = v.Field(i).Interface()
 	}
 	return data
 }
+
 func DBGetAllKey(prefix string, bvalue bool) (*[]string, error) {
-	var (
-		ret []string
-		//key []string
-	)
+	var ret []string
+	// key []string
 	found := prefix != "nil"
 	iter := DBlevel.NewIterator(nil, nil)
 	for iter.Next() {

@@ -22,7 +22,8 @@ const (
 )
 
 func CreateContract(contractName string, keyID int64, params map[string]any,
-	privateKey []byte) error {
+	privateKey []byte,
+) error {
 	ecosysID, _ := converter.ParseName(contractName)
 	if ecosysID == 0 {
 		ecosysID = 1
@@ -33,7 +34,7 @@ func CreateContract(contractName string, keyID int64, params map[string]any,
 	}
 	sc := types.SmartTransaction{
 		Header: &types.Header{
-			ID:          int(contract.Info().ID),
+			ID:          int(contract.Info().Id),
 			EcosystemID: ecosysID,
 			KeyID:       keyID,
 			Time:        time.Now().Unix(),
@@ -45,7 +46,7 @@ func CreateContract(contractName string, keyID int64, params map[string]any,
 	if err == nil {
 		rtx := &Transaction{}
 		if err = rtx.Unmarshall(bytes.NewBuffer(txData), true); err == nil {
-			//err = sqldb.SendTx(rtx, sc.KeyId)
+			// err = sqldb.SendTx(rtx, sc.KeyId)
 			err = sqldb.SendTxBatches([]*sqldb.RawTx{rtx.SetRawTx()})
 		}
 	}

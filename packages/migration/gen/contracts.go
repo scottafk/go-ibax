@@ -98,7 +98,7 @@ func main() {
 }
 
 func escape(data string) template.HTML {
-	//data = strings.Replace(data, `%`, `%%`, -1)
+	// data = strings.Replace(data, `%`, `%%`, -1)
 	data = strings.Replace(data, `'`, `''`, -1)
 	data = strings.Replace(data, "`", "` + \"`\" + `", -1)
 	return template.HTML(data)

@@ -6,17 +6,14 @@ package notificator
 
 import (
 	"fmt"
+	"net/smtp"
 	"strings"
 	"time"
-
-	"github.com/shopspring/decimal"
-
-	"net/smtp"
 
 	"github.com/IBAX-io/go-ibax/packages/conf"
 	"github.com/IBAX-io/go-ibax/packages/consts"
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
-
+	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -59,7 +56,6 @@ func CheckTokenMovementLimits(tx *sqldb.DbTransaction, conf conf.TokenMovementCo
 		amount, err := sqldb.GetExcessCommonTokenMovementPerDay(tx)
 
 		if err != nil {
-
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("check common token movement")
 		} else if amount.GreaterThanOrEqual(decimal.NewFromFloat(networkPerDayLimit)) {
 

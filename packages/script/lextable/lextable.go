@@ -48,11 +48,11 @@ var (
 		`skip`: 8,
 	}
 	alphabet = []byte{
-		0x01, //default
-		0x0a, //newline
-		' ',  //space
-		'`',  //back quotes
-		'"',  //double quotes
+		0x01, // default
+		0x0a, // newline
+		' ',  // space
+		'`',  // back quotes
+		'"',  // double quotes
 		';',
 		'(',
 		')',
@@ -233,9 +233,7 @@ var (
 	}
 	out += "\r\n\t\t}\r\n"
 
-	var (
-		data States
-	)
+	var data States
 	state2int := map[string]uint{`main`: 0}
 	if err := json.Unmarshal([]byte(states), &data); err != nil {
 		fmt.Println(err)
@@ -309,9 +307,8 @@ var (
 		out += "\r\n\t\t\t},\r\n"
 	}
 	out += "\t\t\t}\r\n)\r\n"
-	err := os.WriteFile("../lex_table.go", []byte(out), 0644)
+	err := os.WriteFile("../lex_table.go", []byte(out), 0o644)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-
 }

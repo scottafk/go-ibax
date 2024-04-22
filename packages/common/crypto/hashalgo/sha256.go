@@ -12,6 +12,7 @@ func (s *SHA256) GetHMAC(secret string, message string) ([]byte, error) {
 	mac.Write([]byte(message))
 	return mac.Sum(nil), nil
 }
+
 func (s *SHA256) GetHash(msg []byte) []byte {
 	return s.usingSha256(msg)
 }

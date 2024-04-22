@@ -346,17 +346,17 @@ func (prv *PrivateKey) Decrypt(c, s1, s2 []byte) (m []byte, err error) {
 	return
 }
 
-//
 func ParamsFromCurve(curve elliptic.Curve) (params *ECIESParams) {
 	return paramsFromCurve[curve]
 }
 
 var paramsFromCurve = map[elliptic.Curve]*ECIESParams{
-	//ethcrypto.S256(): ECIES_AES128_SHA256,
+	// ethcrypto.S256(): ECIES_AES128_SHA256,
 	elliptic.P256(): ECIES_AES128_SHA256,
 	elliptic.P384(): ECIES_AES256_SHA384,
 	elliptic.P521(): ECIES_AES256_SHA512,
 }
+
 var (
 	ECIES_AES128_SHA256 = &ECIESParams{
 		Hash:      sha256.New,

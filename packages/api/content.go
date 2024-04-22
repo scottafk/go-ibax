@@ -261,7 +261,6 @@ func getMenuHandler(w http.ResponseWriter, r *http.Request) {
 
 	menu.SetTablePrefix(ecosystem)
 	found, err := menu.Get(name)
-
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting menu")
 		errorResponse(w, err)

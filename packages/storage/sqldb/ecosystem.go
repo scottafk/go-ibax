@@ -44,7 +44,6 @@ type EcoParam struct {
 func (f FeeModeFlag) FlagToInt() int64 {
 	ret, _ := strconv.ParseInt(f.Flag, 10, 64)
 	return ret
-
 }
 
 func (f FeeModeFlag) ConversionRateToFloat() float64 {
@@ -104,8 +103,7 @@ func GetAllSystemCount() (int64, error) {
 
 // GetEcoParam is ecosystem combustion percent, digits
 func GetEcoParam(db *DbTransaction, ids []int64) ([]EcoParam, error) {
-	query :=
-		`
+	query := `
 			SELECT eco.id,(eco.fee_mode_info::json#>>'{combustion,percent}')::int as percent ,eco.digits
 			FROM "1_parameters" as par
 			LEFT JOIN "1_ecosystems" as eco ON par.ecosystem = eco.id 
@@ -138,7 +136,7 @@ func (sys *Ecosystem) FeeMode() (*FeeModeInfo, error) {
 	if len(sys.TokenSymbol) == 0 || len(sys.FeeModeInfo) == 0 || sys.ID == consts.DefaultTokenEcosystem {
 		return nil, nil
 	}
-	var info = &FeeModeInfo{}
+	info := &FeeModeInfo{}
 	err := json.Unmarshal([]byte(sys.FeeModeInfo), info)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Unmarshal eco[%d] feemode err", sys.ID)

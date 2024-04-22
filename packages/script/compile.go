@@ -67,27 +67,25 @@ const (
 	errStrNum                // must be number or string
 )
 
-var (
-	// Array of operations and their priority
-	opers = map[uint32]operPrior{
-		isOr:       {Cmd: cmdOr, Priority: 10},
-		isAnd:      {Cmd: cmdAnd, Priority: 15},
-		isEqEq:     {Cmd: cmdEqual, Priority: 20},
-		isNotEq:    {Cmd: cmdNotEq, Priority: 20},
-		isLess:     {Cmd: cmdLess, Priority: 22},
-		isGrEq:     {Cmd: cmdNotLess, Priority: 22},
-		isGreat:    {Cmd: cmdGreat, Priority: 22},
-		isLessEq:   {Cmd: cmdNotGreat, Priority: 22},
-		isPlus:     {Cmd: cmdAdd, Priority: 25},
-		isMinus:    {Cmd: cmdSub, Priority: 25},
-		isAsterisk: {Cmd: cmdMul, Priority: 30},
-		isSolidus:  {Cmd: cmdDiv, Priority: 30},
-		isSign:     {Cmd: cmdSign, Priority: cmdUnary},
-		isNot:      {Cmd: cmdNot, Priority: cmdUnary},
-		isLPar:     {Cmd: cmdSys, Priority: 0xff},
-		isRPar:     {Cmd: cmdSys, Priority: 0},
-	}
-)
+// Array of operations and their priority
+var opers = map[uint32]operPrior{
+	isOr:       {Cmd: cmdOr, Priority: 10},
+	isAnd:      {Cmd: cmdAnd, Priority: 15},
+	isEqEq:     {Cmd: cmdEqual, Priority: 20},
+	isNotEq:    {Cmd: cmdNotEq, Priority: 20},
+	isLess:     {Cmd: cmdLess, Priority: 22},
+	isGrEq:     {Cmd: cmdNotLess, Priority: 22},
+	isGreat:    {Cmd: cmdGreat, Priority: 22},
+	isLessEq:   {Cmd: cmdNotGreat, Priority: 22},
+	isPlus:     {Cmd: cmdAdd, Priority: 25},
+	isMinus:    {Cmd: cmdSub, Priority: 25},
+	isAsterisk: {Cmd: cmdMul, Priority: 30},
+	isSolidus:  {Cmd: cmdDiv, Priority: 30},
+	isSign:     {Cmd: cmdSign, Priority: cmdUnary},
+	isNot:      {Cmd: cmdNot, Priority: cmdUnary},
+	isLPar:     {Cmd: cmdSys, Priority: 0xff},
+	isRPar:     {Cmd: cmdSys, Priority: 0},
+}
 
 // StateName checks the name of the contract and modifies it to @[state]name if it is necessary.
 func StateName(state uint32, name string) string {
@@ -539,8 +537,10 @@ main:
 			if len(buffer) > 0 {
 				if prev := buffer[len(buffer)-1]; prev.Cmd == cmdFuncName {
 					buffer = buffer[:len(buffer)-1]
-					(*prev).Value = FuncNameCmd{Name: prev.Value.(FuncNameCmd).Name,
-						Count: parcount[len(parcount)-1]}
+					(*prev).Value = FuncNameCmd{
+						Name:  prev.Value.(FuncNameCmd).Name,
+						Count: parcount[len(parcount)-1],
+					}
 					parcount = parcount[:len(parcount)-1]
 					bytecode.push(prev)
 				}

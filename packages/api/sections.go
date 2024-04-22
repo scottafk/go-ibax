@@ -94,7 +94,6 @@ func getSectionsHandler(w http.ResponseWriter, r *http.Request) {
 			roles := &sqldb.Role{}
 			roles.SetTablePrefix(1)
 			role, err := roles.Get(nil, client.RoleID)
-
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Debug("Getting role by id")
 				errorResponse(w, err)

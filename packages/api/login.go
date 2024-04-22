@@ -167,7 +167,7 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 			contract := smart.GetContract("NewUser", 1)
 			sc := types.SmartTransaction{
 				Header: &types.Header{
-					ID:          int(contract.Info().ID),
+					ID:          int(contract.Info().Id),
 					EcosystemID: 1,
 					Time:        time.Now().Unix(),
 					KeyID:       conf.Config.KeyID,
@@ -361,7 +361,8 @@ func checkRoleFromParam(role, ecosystemID int64, account string) (int64, error) 
 				"type":      consts.DBError,
 				"account":   account,
 				"role":      role,
-				"ecosystem": ecosystemID}).Error("check role")
+				"ecosystem": ecosystemID,
+			}).Error("check role")
 
 			return 0, err
 		}

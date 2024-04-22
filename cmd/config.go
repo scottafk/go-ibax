@@ -50,7 +50,6 @@ var configCmd = &cobra.Command{
 }
 
 func init() {
-
 	cmdFlags := configCmd.Flags()
 	// Command flags
 	cmdFlags.String("path", "", "Generate config to (default dataDir/config.toml)")
@@ -72,10 +71,10 @@ func init() {
 	cmdFlags.StringVar(&conf.Config.TLSConf.TLSCert, "tlsCert", "", "Filepath to the fullchain of certificates")
 	cmdFlags.StringVar(&conf.Config.TLSConf.TLSKey, "tlsKey", "", "Filepath to the private key")
 
-	//Bootstrap
+	// Bootstrap
 	cmdFlags.StringSliceVar(&conf.Config.BootNodes.NodesAddr, "bootNodes", []string{}, "List of addresses for downloading blockchain")
 
-	//LocalConf
+	// LocalConf
 	cmdFlags.Int64Var(&conf.Config.LocalConf.MaxPageGenerationTime, "mpgt", 3000, "Max page generation time in ms")
 	cmdFlags.Int64Var(&conf.Config.LocalConf.HTTPServerMaxBodySize, "mbs", 1<<20, "Max server body size in byte")
 	cmdFlags.Int64Var(&conf.Config.LocalConf.NetworkID, "networkID", 1, "Network ID")
@@ -104,7 +103,7 @@ func init() {
 	cmdFlags.IntVar(&conf.Config.DB.MaxIdleConns, "dbMaxIdleConns", 5, "DB sets the maximum number of connections in the idle connection pool")
 	cmdFlags.IntVar(&conf.Config.DB.MaxOpenConns, "dbMaxOpenConns", 100, "sets the maximum number of open connections to the database")
 
-	//Redis
+	// Redis
 	cmdFlags.BoolVar(&conf.Config.Redis.Enable, "redisEnable", false, "enable redis")
 	cmdFlags.StringVar(&conf.Config.Redis.Host, "redisHost", "localhost", "redis host")
 	cmdFlags.IntVar(&conf.Config.Redis.Port, "redisPort", 6379, "redis port")

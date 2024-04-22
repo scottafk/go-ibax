@@ -41,7 +41,7 @@ type Method struct {
 }
 
 func (a *Method) Delete(name string) {
-	for k, _ := range a.services {
+	for k := range a.services {
 		if k == name {
 			delete(a.services, k)
 			break

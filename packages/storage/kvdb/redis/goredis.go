@@ -22,9 +22,7 @@ type RedisParams struct {
 }
 
 func RedisInit(conf conf.RedisConfig) error {
-	var (
-		err error
-	)
+	var err error
 	GRedisIsactive = false
 
 	Gclient0 = redis.NewClient(&redis.Options{

@@ -9,11 +9,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/IBAX-io/needle/vm"
+
 	"github.com/pkg/errors"
 
 	"github.com/IBAX-io/go-ibax/packages/conf/syspar"
 	"github.com/IBAX-io/go-ibax/packages/consts"
-	"github.com/IBAX-io/go-ibax/packages/script"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -98,7 +99,7 @@ func (limits *Limits) CheckLimit(t TransactionCaller) error {
 func limitError(limitName, msg string, args ...any) error {
 	err := fmt.Errorf(msg, args...)
 	log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error(limitName)
-	return script.SetVMError(`panic`, err)
+	return vm.VMError{Type: `panic`, Err: err}
 }
 
 // Checking the max tx in the block

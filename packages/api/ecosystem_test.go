@@ -16,9 +16,7 @@ import (
 )
 
 func TestNewEcosystem(t *testing.T) {
-	var (
-		err error
-	)
+	var err error
 	if err = keyLogin(1); err != nil {
 		t.Error(err)
 		return
@@ -36,9 +34,7 @@ func TestNewEcosystem(t *testing.T) {
 }
 
 func TestEditEcosystem(t *testing.T) {
-	var (
-		err error
-	)
+	var err error
 	if err = keyLogin(2); err != nil {
 		t.Error(err)
 		return
@@ -47,8 +43,10 @@ func TestEditEcosystem(t *testing.T) {
 	value := `P(test,test paragraph)`
 
 	name := randName(`page`)
-	form := url.Values{"Name": {name}, "Value": {value},
-		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	form := url.Values{
+		"Name": {name}, "Value": {value},
+		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"},
+	}
 	err = postTx(`@1NewPage`, &form)
 	if err != nil {
 		t.Error(err)
@@ -59,29 +57,37 @@ func TestEditEcosystem(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	form = url.Values{"Name": {name}, "Value": {`MenuItem(default_page)`}, "ApplicationId": {`1`},
-		"Conditions": {"ContractConditions(`MainCondition`)"}}
+	form = url.Values{
+		"Name": {name}, "Value": {`MenuItem(default_page)`}, "ApplicationId": {`1`},
+		"Conditions": {"ContractConditions(`MainCondition`)"},
+	}
 	assert.NoError(t, postTx(`@1NewMenu`, &form))
 
-	form = url.Values{"Id": {`1`}, "Value": {value},
-		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	form = url.Values{
+		"Id": {`1`}, "Value": {value},
+		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"},
+	}
 	err = postTx(`@1EditPage`, &form)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	nameCont := randName(`test`)
-	form = url.Values{"Value": {`contract ` + nameCont + ` {
+	form = url.Values{
+		"Value": {`contract ` + nameCont + ` {
 		action { Test("empty",  "empty value")}}`}, "ApplicationId": {`1`},
-		"Conditions": {`ContractConditions("MainCondition")`}}
+		"Conditions": {`ContractConditions("MainCondition")`},
+	}
 	_, id, err := postTxResult(`@1NewContract`, &form)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	form = url.Values{"Id": {id}, "Value": {`contract ` + nameCont + ` {
+	form = url.Values{
+		"Id": {id}, "Value": {`contract ` + nameCont + ` {
 		action { Test("empty3",  "empty value")}}`},
-		"Conditions": {`ContractConditions("MainCondition")`}}
+		"Conditions": {`ContractConditions("MainCondition")`},
+	}
 	if err := postTx(`@1EditContract`, &form); err != nil {
 		t.Error(err)
 		return
@@ -118,7 +124,6 @@ func TestPlatformParams(t *testing.T) {
 }
 
 func TestSystemParams(t *testing.T) {
-
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return
@@ -220,10 +225,16 @@ func TestAppParams(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "value 1", msg)
 
-	forTest := tplList{{`AppParam(` + rnd + `1, 1, Source: myname)`,
-		`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","simple string"],["2","index"]],"source":"myname","types":["text","text"]}}]`},
-		{`SetVar(myapp, 1)AppParam(` + rnd + `2, App: #myapp#)`,
-			`[{"tag":"text","text":"{"par1":"value 1", "par2":"value 2"}"}]`}}
+	forTest := tplList{
+		{
+			`AppParam(` + rnd + `1, 1, Source: myname)`,
+			`[{"tag":"data","attr":{"columns":["id","name"],"data":[["1","simple string"],["2","index"]],"source":"myname","types":["text","text"]}}]`,
+		},
+		{
+			`SetVar(myapp, 1)AppParam(` + rnd + `2, App: #myapp#)`,
+			`[{"tag":"text","text":"{"par1":"value 1", "par2":"value 2"}"}]`,
+		},
+	}
 	for _, item := range forTest {
 		var ret contentResult
 		assert.NoError(t, sendPost(`content`, &url.Values{`template`: {item.input}}, &ret))

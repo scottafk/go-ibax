@@ -21,12 +21,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/IBAX-io/go-ibax/packages/common/crypto/base58"
-
-	"golang.org/x/crypto/sha3"
-
 	"github.com/IBAX-io/go-ibax/packages/clbmanager"
 	"github.com/IBAX-io/go-ibax/packages/common/crypto"
+	"github.com/IBAX-io/go-ibax/packages/common/crypto/base58"
 	"github.com/IBAX-io/go-ibax/packages/common/crypto/hashalgo"
 	"github.com/IBAX-io/go-ibax/packages/conf"
 	"github.com/IBAX-io/go-ibax/packages/conf/syspar"
@@ -34,14 +31,14 @@ import (
 	"github.com/IBAX-io/go-ibax/packages/converter"
 	"github.com/IBAX-io/go-ibax/packages/scheduler"
 	"github.com/IBAX-io/go-ibax/packages/scheduler/contract"
-	"github.com/IBAX-io/go-ibax/packages/script"
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
 	qb "github.com/IBAX-io/go-ibax/packages/storage/sqldb/queryBuilder"
-	"github.com/IBAX-io/go-ibax/packages/types"
-
+	"github.com/IBAX-io/needle/compiler"
+	"github.com/IBAX-io/needle/vm"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/crypto/sha3"
 )
 
 const (
@@ -50,9 +47,7 @@ const (
 	contractTxType            = 128
 )
 
-var (
-	ErrNotImplementedOnCLB = errors.New("Contract not implemented on CLB")
-)
+var ErrNotImplementedOnCLB = errors.New("Contract not implemented on CLB")
 
 var BOM = []byte{0xEF, 0xBB, 0xBF}
 
@@ -80,7 +75,7 @@ type TxInfo struct {
 	Params       map[string]any `json:"params"`
 	CreatedAt    int64          `json:"created_at"`
 	Size         string         `json:"size"`
-	Status       int64          `json:"status"` //0:success 1:penalty
+	Status       int64          `json:"status"` // 0:success 1:penalty
 }
 
 type TableInfo struct {
@@ -89,23 +84,23 @@ type TableInfo struct {
 }
 
 type FlushInfo struct {
-	ID   uint32            // id
-	Prev *script.CodeBlock // previous item, nil if the new item has been appended
-	Info *script.ObjInfo
+	ID   uint32              // id
+	Prev *compiler.CodeBlock // previous item, nil if the new item has been appended
+	Info *compiler.Object
 	Name string // the name
 }
 
 func (finfo *FlushInfo) FlushVM() {
 	if finfo.Prev == nil {
-		if finfo.ID != uint32(len(script.GetVM().Children)-1) {
-			//logger.WithFields(log.Fields{"type": consts.ContractError, "value": finfo.ID, "len": len(GetVM().Children) - 1}).Error("flush rollback")
+		if finfo.ID != uint32(len(vm.GetVM().Children)-1) {
+			// logger.WithFields(log.Fields{"type": consts.ContractError, "value": finfo.ID, "len": len(GetVM().Children) - 1}).Error("flush rollback")
 		} else {
-			script.GetVM().Children = script.GetVM().Children[:len(script.GetVM().Children)-1]
-			delete(script.GetVM().Objects, finfo.Name)
+			vm.GetVM().Children = vm.GetVM().Children[:len(vm.GetVM().Children)-1]
+			delete(vm.GetVM().Objects, finfo.Name)
 		}
 	} else {
-		script.GetVM().Children[finfo.ID] = finfo.Prev
-		script.GetVM().Objects[finfo.Name] = finfo.Info
+		vm.GetVM().Children[finfo.ID] = finfo.Prev
+		vm.GetVM().Objects[finfo.Name] = finfo.Info
 	}
 }
 
@@ -171,7 +166,7 @@ var (
 )
 
 // EmbedFuncs is extending vm with embedded functions
-func EmbedFuncs(vt script.VMType) map[string]any {
+func EmbedFuncs() map[string]any {
 	f := map[string]any{
 		"AddressToId":                  converter.AddressToID,
 		"ColumnCondition":              ColumnCondition,
@@ -288,14 +283,15 @@ func EmbedFuncs(vt script.VMType) map[string]any {
 		"MathModDecimal":               MathModDecimal,
 		"CreateView":                   CreateView,
 	}
-	switch vt {
-	case script.VMType_CLB:
+
+	if conf.Config.IsCLB() {
 		f["HTTPRequest"] = HTTPRequest
 		f["Date"] = Date
 		f["HTTPPostJSON"] = HTTPPostJSON
 		f["ValidateCron"] = ValidateCron
 		f["UpdateCron"] = UpdateCron
-	case script.VMType_CLBMaster:
+	}
+	if conf.Config.IsCLBMaster() {
 		f["HTTPRequest"] = HTTPRequest
 		f["Date"] = Date
 		f["HTTPPostJSON"] = HTTPPostJSON
@@ -306,7 +302,8 @@ func EmbedFuncs(vt script.VMType) map[string]any {
 		f["StartCLB"] = StartCLB
 		f["StopCLBProcess"] = StopCLBProcess
 		f["GetCLBList"] = GetCLBList
-	case script.VMType_Smart:
+	}
+	if conf.Config.IsNode() {
 		f["GetBlock"] = GetBlock
 	}
 	return f
@@ -324,11 +321,12 @@ func accessContracts(sc *SmartContract, names ...string) bool {
 }
 
 // CompileContract is compiling contract
-func CompileContract(sc *SmartContract, code string, state, id, token int64) (any, error) {
+func CompileContract(sc *SmartContract, code string, state, id, token int64) (*compiler.CodeBlock, error) {
 	if err := validateAccess(sc, "CompileContract"); err != nil {
 		return nil, err
 	}
-	return sc.VM.CompileBlock([]rune(code), &script.OwnerInfo{StateID: uint32(state), WalletID: id, TokenID: token})
+	owner := &compiler.OwnerInfo{StateId: uint32(state), WalletId: id, TokenId: token}
+	return compiler.CompileBlock([]rune(code), sc.VM.MergeCompConfig(&compiler.CompConfig{Owner: owner}))
 }
 
 // ContractAccess checks whether the name of the executable contract matches one of the names listed in the parameters.
@@ -388,10 +386,10 @@ func ContractConditions(sc *SmartContract, names ...any) (bool, error) {
 	for _, iname := range names {
 		name := iname.(string)
 		if len(name) > 0 {
-			contractName := script.StateName(uint32(sc.TxSmart.EcosystemID), name)
+			contractName := compiler.StateName(uint32(sc.TxSmart.EcosystemID), name)
 			getContract := VMGetContract(sc.VM, name, uint32(sc.TxSmart.EcosystemID))
 			if getContract == nil {
-				contractName = script.StateName(0, name)
+				contractName = compiler.StateName(0, name)
 				getContract = VMGetContract(sc.VM, name, 0)
 				if getContract == nil {
 					return false, logErrorfShort(eUnknownContract, name, consts.NotFound)
@@ -410,7 +408,7 @@ func ContractConditions(sc *SmartContract, names ...any) (bool, error) {
 				return false, err
 			}
 			methods := []string{`conditions`}
-			err := script.RunContractByName(sc.VM, contractName, methods, vars, sc.Hash)
+			err := vm.RunContractByName(sc.VM, contractName, methods, vars)
 			if err != nil {
 				return false, err
 			}
@@ -425,7 +423,7 @@ func ContractConditions(sc *SmartContract, names ...any) (bool, error) {
 func contractName(value string) (name string, err error) {
 	var list []string
 
-	list, err = script.ContractsList(value)
+	list, err = compiler.ContractsList(value)
 	if err == nil && len(list) > 0 {
 		name = list[0]
 	}
@@ -433,11 +431,11 @@ func contractName(value string) (name string, err error) {
 }
 
 func ValidateEditContractNewValue(sc *SmartContract, newValue, oldValue string) error {
-	list, err := script.ContractsList(newValue)
+	list, err := compiler.ContractsList(newValue)
 	if err != nil {
 		return err
 	}
-	curlist, err := script.ContractsList(oldValue)
+	curlist, err := compiler.ContractsList(oldValue)
 	if err != nil {
 		return err
 	}
@@ -465,7 +463,7 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions string, recip
 	}
 	pars := make(map[string]any)
 	ecosystemID := sc.TxSmart.EcosystemID
-	var root any
+	var root *compiler.CodeBlock
 	if len(value) > 0 {
 		var err error
 		root, err = CompileContract(sc, value, ecosystemID, recipient, converter.StrToInt64(tokenID))
@@ -484,7 +482,7 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions string, recip
 				return err
 			}
 		}
-		if _, err := DBUpdate(sc, "@1contracts", id, types.LoadMap(pars)); err != nil {
+		if _, err := DBUpdate(sc, "@1contracts", id, compiler.LoadMap(pars)); err != nil {
 			return err
 		}
 	}
@@ -504,15 +502,17 @@ func CreateContract(sc *SmartContract, name, value, conditions string, tokenEcos
 	var err error
 	isExists := GetContractByName(sc, name)
 	if isExists != 0 {
-		log.WithFields(log.Fields{"type": consts.ContractError, "name": name,
-			"tableId": isExists}).Error("create existing contract")
-		return 0, fmt.Errorf(eContractExist, script.StateName(uint32(sc.TxSmart.EcosystemID), name))
+		log.WithFields(log.Fields{
+			"type": consts.ContractError, "name": name,
+			"tableId": isExists,
+		}).Error("create existing contract")
+		return 0, fmt.Errorf(eContractExist, compiler.StateName(uint32(sc.TxSmart.EcosystemID), name))
 	}
 	root, err := CompileContract(sc, value, sc.TxSmart.EcosystemID, 0, tokenEcosystem)
 	if err != nil {
 		return 0, err
 	}
-	_, id, err = DBInsert(sc, "@1contracts", types.LoadMap(map[string]any{
+	_, id, err = DBInsert(sc, "@1contracts", compiler.LoadMap(map[string]any{
 		"name":       name,
 		"value":      value,
 		"conditions": conditions,
@@ -601,7 +601,7 @@ func CreateView(sc *SmartContract, vname, columns, where string, applicationID i
 	)
 
 	viewName = qb.GetTableName(sc.TxSmart.EcosystemID, vname)
-	var check = sqldb.Namer{}
+	check := sqldb.Namer{}
 	if check.HasExists(sc.DbTransaction, viewName) {
 		return fmt.Errorf(eTableExists, vname)
 	}
@@ -618,9 +618,13 @@ func CreateView(sc *SmartContract, vname, columns, where string, applicationID i
 		return logErrorDB(err, "creating view table")
 	}
 	prefix, name := PrefixName(viewName)
-	_, _, err = sc.insert([]string{`name`, `columns`, `wheres`, `app_id`,
-		`ecosystem`}, []any{name, string(colout), string(whsout),
-		applicationID, prefix}, `1_views`)
+	_, _, err = sc.insert([]string{
+		`name`, `columns`, `wheres`, `app_id`,
+		`ecosystem`,
+	}, []any{
+		name, string(colout), string(whsout),
+		applicationID, prefix,
+	}, `1_views`)
 	if err != nil {
 		return logErrorDB(err, "insert table info")
 	}
@@ -839,9 +843,13 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	}
 	prefix, name := PrefixName(tableName)
 
-	_, _, err = sc.insert([]string{`name`, `columns`, `permissions`, `conditions`, `app_id`,
-		`ecosystem`}, []any{name, string(colout), string(permout),
-		`ContractAccess("@1EditTable")`, applicationID, prefix}, `1_tables`)
+	_, _, err = sc.insert([]string{
+		`name`, `columns`, `permissions`, `conditions`, `app_id`,
+		`ecosystem`,
+	}, []any{
+		name, string(colout), string(permout),
+		`ContractAccess("@1EditTable")`, applicationID, prefix,
+	}, `1_tables`)
 	if err != nil {
 		return logErrorDB(err, "insert table info")
 	}
@@ -863,7 +871,7 @@ func columnType(colType string) (string, error) {
 	return ``, fmt.Errorf(eColumnType, colType)
 }
 
-func mapToParams(values *types.Map) (params []string, val []any, err error) {
+func mapToParams(values *compiler.Map) (params []string, val []any, err error) {
 	for _, key := range values.Keys() {
 		v, _ := values.Get(key)
 		params = append(params, converter.Sanitize(key, ` ->+`))
@@ -876,7 +884,7 @@ func mapToParams(values *types.Map) (params []string, val []any, err error) {
 }
 
 // DBInsert inserts a record into the specified database table
-func DBInsert(sc *SmartContract, tblname string, values *types.Map) (qcost int64, ret int64, err error) {
+func DBInsert(sc *SmartContract, tblname string, values *compiler.Map) (qcost int64, ret int64, err error) {
 	if tblname == "platform_parameters" {
 		return 0, 0, fmt.Errorf("platform parameters access denied")
 	}
@@ -931,8 +939,8 @@ func PrepareColumns(columns []string) string {
 
 // DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
 func DBSelect(sc *SmartContract, tblname string, inColumns any, id int64, inOrder any,
-	offset, limit int64, inWhere *types.Map, query any, group string, all bool) (int64, []any, error) {
-
+	offset, limit int64, inWhere *compiler.Map, query any, group string, all bool,
+) (int64, []any, error) {
 	var (
 		err     error
 		rows    *sql.Rows
@@ -968,10 +976,10 @@ func DBSelect(sc *SmartContract, tblname string, inColumns any, id int64, inOrde
 	}
 	q := sqldb.GetDB(sc.DbTransaction).Table(tblname).Select(PrepareColumns(columns)).Where(where)
 
-	//group + order => false
-	//group + no order => true
-	//no group + order => true
-	//no group + no order => true
+	// group + order => false
+	// group + no order => true
+	// no group + order => true
+	// no group + no order => true
 	order, err = qb.GetOrder(tblname, inOrder, true)
 	if err != nil {
 		return 0, nil, err
@@ -1018,7 +1026,7 @@ func DBSelect(sc *SmartContract, tblname string, inColumns any, id int64, inOrde
 		if err != nil {
 			return 0, nil, logErrorDB(err, "scanning next row")
 		}
-		row := types.NewMap()
+		row := compiler.NewMap()
 		for i, col := range values {
 			var value string
 			if col != nil {
@@ -1029,9 +1037,8 @@ func DBSelect(sc *SmartContract, tblname string, inColumns any, id int64, inOrde
 		result = append(result, reflect.ValueOf(row).Interface())
 	}
 	if perm != nil && len(perm[`filter`]) > 0 {
-		fltResult, err := sc.VM.EvalIf(perm[`filter`], uint32(sc.TxSmart.EcosystemID),
-			sc.getExtend(),
-		)
+		sc.getExtend()[vm.ExtendTxCost] = syspar.GetMaxCost()
+		fltResult, err := sc.VM.EvalIf(perm[`filter`], uint32(sc.TxSmart.EcosystemID), sc.getExtend())
 		if err != nil {
 			return 0, nil, err
 		}
@@ -1044,8 +1051,9 @@ func DBSelect(sc *SmartContract, tblname string, inColumns any, id int64, inOrde
 }
 
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
-func DBUpdateExt(sc *SmartContract, tblname string, where *types.Map,
-	values *types.Map) (qcost int64, err error) {
+func DBUpdateExt(sc *SmartContract, tblname string, where *compiler.Map,
+	values *compiler.Map,
+) (qcost int64, err error) {
 	if tblname == "platform_parameters" {
 		return 0, fmt.Errorf("platform parameters access denied")
 	}
@@ -1065,8 +1073,8 @@ func DBUpdateExt(sc *SmartContract, tblname string, where *types.Map,
 }
 
 // DBUpdate updates the item with the specified id in the table
-func DBUpdate(sc *SmartContract, tblname string, id int64, values *types.Map) (qcost int64, err error) {
-	return DBUpdateExt(sc, tblname, types.LoadMap(map[string]any{`id`: id}), values)
+func DBUpdate(sc *SmartContract, tblname string, id int64, values *compiler.Map) (qcost int64, err error) {
+	return DBUpdateExt(sc, tblname, compiler.LoadMap(map[string]any{`id`: id}), values)
 }
 
 // EcosysParam returns the value of the specified parameter for the ecosystem
@@ -1119,29 +1127,31 @@ func CheckCondition(sc *SmartContract, condition string) (bool, error) {
 }
 
 // FlushContract is flushing contract
-func FlushContract(sc *SmartContract, iroot any, id int64) error {
+func FlushContract(sc *SmartContract, root *compiler.CodeBlock, id int64) error {
 	if err := validateAccess(sc, "FlushContract"); err != nil {
 		return err
 	}
-	root := iroot.(*script.CodeBlock)
 	if id != 0 {
-		if len(root.Children) != 1 || root.Children[0].Type != script.ObjectType_Contract {
+		if len(root.Children) != 1 || root.Children[0].Type != compiler.CodeBlockContract {
 			return errOneContract
 		}
 	}
 	for i, item := range root.Children {
-		if item.Type == script.ObjectType_Contract {
-			root.Children[i].GetContractInfo().Owner.TableID = id
+		if item.Type == compiler.CodeBlockContract {
+			root.Children[i].GetContractInfo().Owner.TableId = id
 		}
 	}
 	for key, item := range root.Objects {
 		if cur, ok := sc.VM.Objects[key]; ok {
 			var id uint32
 			switch item.Type {
-			case script.ObjectType_Contract:
-				id = cur.GetCodeBlock().GetContractInfo().ID
-			case script.ObjectType_Func:
-				id = cur.GetCodeBlock().GetFuncInfo().ID
+			case compiler.ObjCodeBlock:
+				if cur.IsCodeBlockContract() {
+					id = cur.GetCodeBlock().GetContractInfo().Id
+				}
+				if cur.IsCodeBlockFunction() {
+					id = cur.GetCodeBlock().GetFunctionInfo().Id
+				}
 			}
 			sc.FlushRollback = append(sc.FlushRollback, &FlushInfo{
 				ID:   id,
@@ -1157,7 +1167,6 @@ func FlushContract(sc *SmartContract, iroot any, id int64) error {
 				Name: key,
 			})
 		}
-
 	}
 	sc.VM.FlushBlock(root)
 	return nil
@@ -1165,7 +1174,7 @@ func FlushContract(sc *SmartContract, iroot any, id int64) error {
 
 // IsObject returns true if there is the specified contract
 func IsObject(sc *SmartContract, name string, state int64) bool {
-	return script.VMObjectExists(sc.VM, name, uint32(state))
+	return vm.ObjectExists(sc.VM, name, uint32(state))
 }
 
 // Len returns the length of the slice
@@ -1250,11 +1259,11 @@ func columnConditions(sc *SmartContract, columns string) (err error) {
 		if len(perm.Update) == 0 {
 			return logErrorShort(errConditionEmpty, consts.EmptyObject)
 		}
-		if err = script.VMCompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.EcosystemID)); err != nil {
+		if err = vm.CompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.EcosystemID)); err != nil {
 			return logError(err, consts.EvalError, "compile update conditions")
 		}
 		if len(perm.Read) > 0 {
-			if err = script.VMCompileEval(sc.VM, perm.Read, uint32(sc.TxSmart.EcosystemID)); err != nil {
+			if err = vm.CompileEval(sc.VM, perm.Read, uint32(sc.TxSmart.EcosystemID)); err != nil {
 				return logError(err, consts.EvalError, "compile read conditions")
 			}
 		}
@@ -1300,7 +1309,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		if len(cond) == 0 && name != `Read` && name != `Filter` {
 			return logErrorfShort(eEmptyCond, name, consts.EmptyObject)
 		}
-		if err = script.VMCompileEval(sc.VM, cond, uint32(sc.TxSmart.EcosystemID)); err != nil {
+		if err = vm.CompileEval(sc.VM, cond, uint32(sc.TxSmart.EcosystemID)); err != nil {
 			return logError(err, consts.EvalError, "compile evaluating permissions")
 		}
 	}
@@ -1328,7 +1337,7 @@ func ValidateCondition(sc *SmartContract, condition string, state int64) error {
 	if len(condition) == 0 {
 		return logErrorShort(errConditionEmpty, consts.EmptyObject)
 	}
-	return script.VMCompileEval(sc.VM, condition, uint32(state))
+	return vm.CompileEval(sc.VM, condition, uint32(state))
 }
 
 // ColumnCondition is contract func
@@ -1363,11 +1372,11 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 		return logErrorShort(errPermEmpty, consts.EmptyObject)
 	}
 	perm, err := getPermColumns(permissions)
-	if err = script.VMCompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.EcosystemID)); err != nil {
+	if err = vm.CompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.EcosystemID)); err != nil {
 		return err
 	}
 	if len(perm.Read) > 0 {
-		if err = script.VMCompileEval(sc.VM, perm.Read, uint32(sc.TxSmart.EcosystemID)); err != nil {
+		if err = vm.CompileEval(sc.VM, perm.Read, uint32(sc.TxSmart.EcosystemID)); err != nil {
 			return err
 		}
 	}
@@ -1470,7 +1479,6 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	tblname := qb.GetTableName(sc.TxSmart.EcosystemID, tableName)
 
 	sqlColType, err = columnType(colType)
-
 	if err != nil {
 		return
 	}
@@ -1487,7 +1495,6 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	temp := &cols{}
 	err = sqldb.GetDB(sc.DbTransaction).Table(`1_tables`).Where("name = ? and ecosystem = ?",
 		strings.ToLower(tableName), sc.TxSmart.EcosystemID).Select("id,columns").Find(temp).Error
-
 	if err != nil {
 		return
 	}
@@ -1557,7 +1564,7 @@ func HMac(key, data string, raw_output bool) (ret string, err error) {
 }
 
 // GetMapKeys returns the array of keys of the map
-func GetMapKeys(in *types.Map) []any {
+func GetMapKeys(in *compiler.Map) []any {
 	keys := make([]any, 0, in.Size())
 	for _, k := range in.Keys() {
 		keys = append(keys, k)
@@ -1566,7 +1573,7 @@ func GetMapKeys(in *types.Map) []any {
 }
 
 // SortedKeys returns the sorted array of keys of the map
-func SortedKeys(m *types.Map) []any {
+func SortedKeys(m *compiler.Map) []any {
 	i, sorted := 0, make([]string, m.Size())
 	for _, k := range m.Keys() {
 		sorted[i] = k
@@ -1603,8 +1610,7 @@ func httpRequest(req *http.Request, headers map[string]any) (string, error) {
 }
 
 // HTTPRequest sends http request
-func HTTPRequest(requrl, method string, head *types.Map, params *types.Map) (string, error) {
-
+func HTTPRequest(requrl, method string, head *compiler.Map, params *compiler.Map) (string, error) {
 	var ioform io.Reader
 
 	headers := make(map[string]any)
@@ -1629,7 +1635,7 @@ func HTTPRequest(requrl, method string, head *types.Map, params *types.Map) (str
 }
 
 // HTTPPostJSON sends post http request with json
-func HTTPPostJSON(requrl string, head *types.Map, json_str string) (string, error) {
+func HTTPPostJSON(requrl string, head *compiler.Map, json_str string) (string, error) {
 	req, err := http.NewRequest("POST", requrl, bytes.NewBuffer([]byte(json_str)))
 	if err != nil {
 		return ``, logError(err, consts.NetworkError, "new http request")
@@ -1729,7 +1735,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 
 				for _, b := range blocks {
 					if _, err := DBUpdate(smartContract, "@1bad_blocks", b.ID,
-						types.LoadMap(map[string]any{"deleted": "1"})); err != nil {
+						compiler.LoadMap(map[string]any{"deleted": "1"})); err != nil {
 						return logErrorValue(err, consts.DBError, "deleting bad block",
 							converter.Int64ToStr(b.ID))
 					}
@@ -1745,13 +1751,12 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				_, _, err = DBInsert(
 					smartContract,
 					"@1node_ban_logs",
-					types.LoadMap(map[string]any{
+					compiler.LoadMap(map[string]any{
 						"node_id":   nodeKeyID,
 						"banned_at": now.Format(time.RFC3339),
 						"ban_time":  int64(syspar.GetNodeBanTime() / time.Millisecond), // in ms
 						"reason":    banMessage,
 					}))
-
 				if err != nil {
 					return logErrorValue(err, consts.DBError, "inserting log to node_ban_log",
 						converter.Int64ToStr(banReq.ProducerNodeId))
@@ -1760,13 +1765,12 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				_, _, err = DBInsert(
 					smartContract,
 					"@1notifications",
-					types.LoadMap(map[string]any{
+					compiler.LoadMap(map[string]any{
 						"recipient->member_id": nodeKeyID,
 						"notification->type":   sqldb.NotificationTypeSingle,
 						"notification->header": nodeBanNotificationHeader,
 						"notification->body":   banMessage,
 					}))
-
 				if err != nil {
 					return logErrorValue(err, consts.DBError, "inserting log to node_ban_log",
 						converter.Int64ToStr(banReq.ProducerNodeId))
@@ -1794,7 +1798,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 	return nil
 }
 
-func GetBlock(blockID int64) (*types.Map, error) {
+func GetBlock(blockID int64) (*compiler.Map, error) {
 	block := sqldb.BlockChain{}
 	ok, err := block.Get(blockID)
 	if err != nil {
@@ -1804,7 +1808,7 @@ func GetBlock(blockID int64) (*types.Map, error) {
 		return nil, nil
 	}
 
-	return types.LoadMap(map[string]any{
+	return compiler.LoadMap(map[string]any{
 		"id":     block.ID,
 		"time":   block.Time,
 		"key_id": block.KeyID,
@@ -1897,7 +1901,8 @@ func GetCLBList(sc *SmartContract) map[string]string {
 }
 
 func GetHistoryRaw(dbTx *sqldb.DbTransaction, ecosystem int64, tableName string,
-	id, idRollback int64) ([]any, error) {
+	id, idRollback int64,
+) ([]any, error) {
 	table := qb.GetTableName(ecosystem, tableName)
 	rows, err := sqldb.GetDB(dbTx).Table(table).Where("id=?", id).Rows()
 	if err != nil {
@@ -1925,7 +1930,7 @@ func GetHistoryRaw(dbTx *sqldb.DbTransaction, ecosystem int64, tableName string,
 		return nil, err
 	}
 	var value string
-	curVal := types.NewMap()
+	curVal := compiler.NewMap()
 	for i, col := range values {
 		if col == nil {
 			value = "NULL"
@@ -1944,7 +1949,7 @@ func GetHistoryRaw(dbTx *sqldb.DbTransaction, ecosystem int64, tableName string,
 	}
 	for _, tx := range *txs {
 		if len(rollbackList) > 0 {
-			prev := rollbackList[len(rollbackList)-1].(*types.Map)
+			prev := rollbackList[len(rollbackList)-1].(*compiler.Map)
 			prev.Set(`block_id`, converter.Int64ToStr(tx.BlockID))
 			prev.Set(`id`, converter.Int64ToStr(tx.ID))
 			block := sqldb.BlockChain{}
@@ -1961,7 +1966,7 @@ func GetHistoryRaw(dbTx *sqldb.DbTransaction, ecosystem int64, tableName string,
 		if tx.Data == "" {
 			continue
 		}
-		rollback := types.NewMap()
+		rollback := compiler.NewMap()
 		for _, k := range curVal.Keys() {
 			v, _ := curVal.Get(k)
 			rollback.Set(k, v)
@@ -1971,7 +1976,7 @@ func GetHistoryRaw(dbTx *sqldb.DbTransaction, ecosystem int64, tableName string,
 			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling rollbackTx.Data from JSON")
 			return nil, err
 		}
-		updMap := types.LoadMap(updValues)
+		updMap := compiler.LoadMap(updValues)
 		for _, k := range updMap.Keys() {
 			v, _ := updMap.Get(k)
 			rollback.Set(k, v)
@@ -1980,7 +1985,7 @@ func GetHistoryRaw(dbTx *sqldb.DbTransaction, ecosystem int64, tableName string,
 		curVal = rollback
 	}
 	if len(*txs) > 0 && len((*txs)[len(*txs)-1].Data) > 0 {
-		prev := rollbackList[len(rollbackList)-1].(*types.Map)
+		prev := rollbackList[len(rollbackList)-1].(*compiler.Map)
 		prev.Set(`block_id`, `1`)
 		prev.Set(`id`, ``)
 		prev.Set(`block_time`, ``)
@@ -2056,16 +2061,17 @@ func GetHistory(sc *SmartContract, tableName string, id int64) ([]any, error) {
 	return GetHistoryRaw(sc.DbTransaction, sc.TxSmart.EcosystemID, tableName, id, 0)
 }
 
-func GetHistoryRow(sc *SmartContract, tableName string, id, idRollback int64) (*types.Map,
-	error) {
+func GetHistoryRow(sc *SmartContract, tableName string, id, idRollback int64) (*compiler.Map,
+	error,
+) {
 	list, err := GetHistoryRaw(sc.DbTransaction, sc.TxSmart.EcosystemID, tableName, id, idRollback)
 	if err != nil {
 		return nil, err
 	}
-	result := types.NewMap()
+	result := compiler.NewMap()
 	if len(list) > 0 {
-		for _, key := range list[0].(*types.Map).Keys() {
-			val, _ := list[0].(*types.Map).Get(key)
+		for _, key := range list[0].(*compiler.Map).Keys() {
+			val, _ := list[0].(*compiler.Map).Get(key)
 			result.Set(key, val)
 		}
 	}
@@ -2105,6 +2111,7 @@ func UpdateRolesNotifications(sc *SmartContract, ecosystemID int64, roles ...any
 	}
 	sc.Notifications.AddRoles(ecosystemID, rolesList...)
 }
+
 func DelColumn(sc *SmartContract, tableName, name string) (err error) {
 	var (
 		count   int64
@@ -2176,17 +2183,17 @@ func DelColumn(sc *SmartContract, tableName, name string) (err error) {
 		if err != nil {
 			return err
 		}
-		return SysRollback(sc, SysRollData{Type: "DeleteColumn", TableName: tblname,
-			Data: string(out)})
+		return SysRollback(sc, SysRollData{
+			Type: "DeleteColumn", TableName: tblname,
+			Data: string(out),
+		})
 	}
 
 	return
 }
 
 func DelTable(sc *SmartContract, tableName string) (err error) {
-	var (
-		count int64
-	)
+	var count int64
 	tblname := qb.GetTableName(sc.TxSmart.EcosystemID, strings.ToLower(tableName))
 
 	t := sqldb.Table{}
@@ -2222,9 +2229,7 @@ func DelTable(sc *SmartContract, tableName string) (err error) {
 	}
 
 	if !sc.CLB {
-		var (
-			out []byte
-		)
+		var out []byte
 		cols, err := sc.DbTransaction.GetAllColumnTypes(tblname)
 		if err != nil {
 			return err
@@ -2277,10 +2282,9 @@ func PubToHex(in any) (ret string) {
 }
 
 func SendExternalTransaction(sc *SmartContract, uid, url, externalContract string,
-	params *types.Map, resultContract string) (err error) {
-	var (
-		out, insertQuery string
-	)
+	params *compiler.Map, resultContract string,
+) (err error) {
+	var out, insertQuery string
 	if _, err := syspar.GetThisNodePosition(); err != nil {
 		return nil
 	}
@@ -2293,10 +2297,14 @@ func SendExternalTransaction(sc *SmartContract, uid, url, externalContract strin
 	sqlBuilder := &qb.SQLQueryBuilder{
 		Entry: logger,
 		Table: `external_blockchain`,
-		Fields: []string{`value`, `uid`, `url`, `external_contract`,
-			`result_contract`, `tx_time`},
-		FieldValues: []any{out, uid, url, externalContract,
-			resultContract, sc.Timestamp},
+		Fields: []string{
+			`value`, `uid`, `url`, `external_contract`,
+			`result_contract`, `tx_time`,
+		},
+		FieldValues: []any{
+			out, uid, url, externalContract,
+			resultContract, sc.Timestamp,
+		},
 		KeyTableChkr: sqldb.KeyTableChecker{},
 	}
 	insertQuery, err = sqlBuilder.GetSQLInsertQuery(sqldb.NextIDGetter{Tx: sc.DbTransaction})

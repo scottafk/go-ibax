@@ -9,8 +9,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/IBAX-io/go-ibax/packages/common/crypto"
-	"github.com/IBAX-io/go-ibax/packages/service/jsonrpc"
 	"math/rand"
 	"net/http"
 	"os"
@@ -20,7 +18,7 @@ import (
 	"github.com/IBAX-io/go-ibax/packages/api"
 	"github.com/IBAX-io/go-ibax/packages/chain/daemonsctl"
 	"github.com/IBAX-io/go-ibax/packages/chain/system"
-
+	"github.com/IBAX-io/go-ibax/packages/common/crypto"
 	logtools "github.com/IBAX-io/go-ibax/packages/common/log"
 	"github.com/IBAX-io/go-ibax/packages/conf"
 	"github.com/IBAX-io/go-ibax/packages/conf/syspar"
@@ -29,6 +27,7 @@ import (
 	"github.com/IBAX-io/go-ibax/packages/modes"
 	"github.com/IBAX-io/go-ibax/packages/network/httpserver"
 	"github.com/IBAX-io/go-ibax/packages/publisher"
+	"github.com/IBAX-io/go-ibax/packages/service/jsonrpc"
 	"github.com/IBAX-io/go-ibax/packages/smart"
 	"github.com/IBAX-io/go-ibax/packages/statsd"
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
@@ -117,8 +116,8 @@ func Start() {
 
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
 		err = daemonsctl.RunAllDaemons(ctx)
-		log.Info("Daemons started")
 		if err != nil {
+			log.Error("Daemons err:", err)
 			exitErr(1)
 		}
 	}
@@ -162,7 +161,7 @@ func initLogs() error {
 			openMode = os.O_CREATE
 		}
 
-		f, err := os.OpenFile(fileName, os.O_WRONLY|openMode, 0755)
+		f, err := os.OpenFile(fileName, os.O_WRONLY|openMode, 0o755)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Can't open log file: ", fileName)
 			return err
@@ -214,12 +213,11 @@ func initRoutes(listenHost string) {
 				TLSConfig: &tls.Config{
 					MinVersion:             tls.VersionTLS12,
 					SessionTicketsDisabled: true,
-					//ClientAuth:   tls.RequireAndVerifyClientCert,
+					// ClientAuth:   tls.RequireAndVerifyClientCert,
 				},
 			}
 			err := s.ListenAndServeTLS(conf.Config.TLSConf.TLSCert, conf.Config.TLSConf.TLSKey)
-
-			//err := http.ListenAndServeTLS(listenHost, conf.Config.TLSCert, conf.Config.TLSKey, handler)
+			// err := http.ListenAndServeTLS(listenHost, conf.Config.TLSCert, conf.Config.TLSKey, handler)
 			if err != nil {
 				log.WithFields(log.Fields{"host": listenHost, "error": err, "type": consts.NetworkError}).Fatal("Listening TLS server")
 			}

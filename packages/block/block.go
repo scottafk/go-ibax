@@ -35,8 +35,10 @@ type Block struct {
 
 // GetLogger is returns logger
 func (b *Block) GetLogger() *log.Entry {
-	return log.WithFields(log.Fields{"block_id": b.Header.BlockId, "block_time": b.Header.Timestamp, "block_wallet_id": b.Header.KeyId,
-		"block_state_id": b.Header.EcosystemId, "block_hash": b.Header.BlockHash, "block_version": b.Header.Version})
+	return log.WithFields(log.Fields{
+		"block_id": b.Header.BlockId, "block_time": b.Header.Timestamp, "block_wallet_id": b.Header.KeyId,
+		"block_state_id": b.Header.EcosystemId, "block_hash": b.Header.BlockHash, "block_version": b.Header.Version,
+	})
 }
 
 func (b *Block) IsGenesis() bool {

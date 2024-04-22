@@ -9,6 +9,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
+	"net/http"
+	"time"
+
 	"github.com/IBAX-io/go-ibax/packages/common/crypto"
 	"github.com/IBAX-io/go-ibax/packages/conf"
 	"github.com/IBAX-io/go-ibax/packages/conf/syspar"
@@ -18,9 +22,6 @@ import (
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
 	"github.com/IBAX-io/go-ibax/packages/transaction"
 	log "github.com/sirupsen/logrus"
-	"math/rand"
-	"net/http"
-	"time"
 
 	"github.com/IBAX-io/go-ibax/packages/converter"
 	"github.com/IBAX-io/go-ibax/packages/types"
@@ -257,7 +258,7 @@ func (a authApi) Login(ctx RequestContext, form *loginForm) (*LoginResult, *Erro
 			contract := smart.GetContract("NewUser", 1)
 			sc := types.SmartTransaction{
 				Header: &types.Header{
-					ID:          int(contract.Info().ID),
+					ID:          int(contract.Info().Id),
 					EcosystemID: 1,
 					Time:        time.Now().Unix(),
 					KeyID:       conf.Config.KeyID,
@@ -434,7 +435,8 @@ func checkRoleFromParam(role, ecosystemID int64, account string) (int64, error) 
 				"type":      consts.DBError,
 				"account":   account,
 				"role":      role,
-				"ecosystem": ecosystemID}).Error("check role")
+				"ecosystem": ecosystemID,
+			}).Error("check role")
 
 			return 0, err
 		}

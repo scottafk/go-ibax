@@ -74,7 +74,7 @@ var sysVars = map[string]struct{}{
 
 var (
 	ErrMemoryLimit = errors.New("Memory limit exceeded")
-	//ErrVMTimeLimit returns when the time limit exceeded
+	// ErrVMTimeLimit returns when the time limit exceeded
 	ErrVMTimeLimit = errors.New(`time limit exceeded`)
 )
 
@@ -102,7 +102,7 @@ type RunTime struct {
 	vars      []any
 	extend    map[string]any
 	vm        *VM
-	cost      int64 //cost remaining
+	cost      int64 // cost remaining
 	err       error
 	unwrap    bool
 	timeLimit bool
@@ -130,9 +130,7 @@ func isSysVar(name string) bool {
 }
 
 func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
-	var (
-		count, in int
-	)
+	var count, in int
 	if rt.callDepth >= maxCallDepth {
 		return fmt.Errorf("max call depth")
 	}
@@ -571,7 +569,6 @@ func isSelfAssignment(dest, value any) bool {
 	switch v := value.(type) {
 	case []any:
 		for _, item := range v {
-
 			if isSelfAssignment(dest, item) {
 				return true
 			}
@@ -751,7 +748,7 @@ main:
 				val := rt.stack[rt.len()-count+ivar]
 				if item.Owner == nil {
 					if item.Obj.Type == ObjectType_ExtVar {
-						var n = item.Obj.GetExtendVariable().Name
+						n := item.Obj.GetExtendVariable().Name
 						if isSysVar(n) {
 							err = fmt.Errorf(eSysVar, n)
 							rt.vm.logger.WithError(err).Error("modifying system variable")
@@ -818,7 +815,7 @@ main:
 			rt.resetByIdx(mapoff + 1)
 			continue
 		case cmdCallVariadic, cmdCall:
-			var cost = int64(CostCall)
+			cost := int64(CostCall)
 			if cmd.Value.(*ObjInfo).Type == ObjectType_ExtFunc {
 				finfo := cmd.Value.(*ObjInfo).GetExtFuncInfo()
 				if rt.vm.ExtCost != nil {
@@ -1392,7 +1389,7 @@ main:
 func (rt *RunTime) Run(block *CodeBlock, params []any, extend map[string]any) (ret []any, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			//rt.vm.logger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error_info": r, "stack": string(debug.Stack())}).Error("runtime panic error")
+			// rt.vm.logger.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error_info": r, "stack": string(debug.Stack())}).Error("runtime panic error")
 			err = fmt.Errorf(`runtime panic: %v`, r)
 		}
 	}()

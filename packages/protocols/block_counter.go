@@ -10,8 +10,7 @@ type intervalBlocksCounter interface {
 	count(state blockGenerationState) (int, error)
 }
 
-type blocksCounter struct {
-}
+type blocksCounter struct{}
 
 func (bc *blocksCounter) count(state blockGenerationState) (int, error) {
 	blockchain := &sqldb.BlockChain{}

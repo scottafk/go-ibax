@@ -36,7 +36,6 @@ func Disseminator(ctx context.Context, d *daemon) error {
 		selectMode  = SelectModel{}
 	)
 	myNodePosition, err := selectMode.GetThisNodePosition()
-
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Debug("finding node")
 		isHonorNode = false

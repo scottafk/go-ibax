@@ -12,6 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/IBAX-io/needle/vm"
+
 	"github.com/IBAX-io/go-ibax/packages/block"
 	"github.com/IBAX-io/go-ibax/packages/conf"
 	"github.com/IBAX-io/go-ibax/packages/conf/syspar"
@@ -19,12 +21,10 @@ import (
 	"github.com/IBAX-io/go-ibax/packages/network"
 	"github.com/IBAX-io/go-ibax/packages/network/tcpclient"
 	"github.com/IBAX-io/go-ibax/packages/rollback"
-	"github.com/IBAX-io/go-ibax/packages/script"
 	"github.com/IBAX-io/go-ibax/packages/service/node"
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
 	"github.com/IBAX-io/go-ibax/packages/transaction"
 	"github.com/IBAX-io/go-ibax/packages/utils"
-
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -127,16 +127,18 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 
 		if err = bl.Check(); err != nil {
 			var replaceCount int64 = 1
-			if err == block.ErrIncorrectRollbackHash {
+			if errors.Is(err, block.ErrIncorrectRollbackHash) {
 				replaceCount++
 			}
-			d.logger.WithFields(log.Fields{"error": err, "from_host": host,
+			d.logger.WithFields(log.Fields{
+				"error": err, "from_host": host,
 				"different": fmt.Errorf("not match previous block %d, prev_position %d, current_position %d",
 					bl.PrevHeader.BlockId,
 					bl.PrevHeader.NodePosition,
 					bl.Header.NodePosition),
-				"type": consts.BlockError, "replaceCount": replaceCount}).Error("checking block hash")
-			//if it is forked, replace the previous blocks to ones from the host
+				"type": consts.BlockError, "replaceCount": replaceCount,
+			}).Error("checking block hash")
+			// if it is forked, replace the previous blocks to ones from the host
 			if errReplace := ReplaceBlocksFromHost(ctx, host, bl.PrevHeader.BlockId, replaceCount); errReplace != nil {
 				return errReplace
 			}
@@ -190,7 +192,7 @@ func banNodePause(host string, blockID, blockTime int64, err error) {
 	}
 
 	reason := err.Error()
-	//log.WithFields(log.Fields{"host": host, "block_id": blockID, "block_time": blockTime, "err": err}).Error("ban node")
+	// log.WithFields(log.Fields{"host": host, "block_id": blockID, "block_time": blockTime, "err": err}).Error("ban node")
 
 	n, err := syspar.GetNodeByHost(host)
 	if err != nil {
@@ -200,8 +202,10 @@ func banNodePause(host string, blockID, blockTime int64, err error) {
 
 	err = node.GetNodesBanService().RegisterBadBlock(n, blockID, blockTime, reason, false)
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "node": hex.EncodeToString(n.PublicKey),
-			"block": blockID}).Error("registering bad block from node")
+		log.WithFields(log.Fields{
+			"error": err, "node": hex.EncodeToString(n.PublicKey),
+			"block": blockID,
+		}).Error("registering bad block from node")
 	}
 }
 
@@ -209,7 +213,6 @@ func banNodePause(host string, blockID, blockTime int64, err error) {
 func getHostWithMaxID(ctx context.Context, logger *log.Entry) (host string, maxBlockID int64, err error) {
 	selectMode := SelectModel{}
 	hosts, err := selectMode.GetHostWithMaxID()
-
 	if err != nil {
 		logger.WithError(err).Error("on filtering banned hosts")
 	}
@@ -262,13 +265,13 @@ func ReplaceBlocksFromHost(ctx context.Context, host string, blockID, replaceCou
 		}
 	}
 
-	script.SavepointSmartVMObjects()
+	vm.SavepointSmartVMObjects()
 	err = processBlocks(blocks)
 	if err != nil {
-		script.RollbackSmartVMObjects()
+		vm.RollbackSmartVMObjects()
 		return err
 	}
-	script.ReleaseSmartVMObjects()
+	vm.ReleaseSmartVMObjects()
 	return err
 }
 

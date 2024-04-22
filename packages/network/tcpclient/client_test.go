@@ -49,7 +49,7 @@ func BenchmarkGetBlockBodiesWithChanReadAll(t *testing.B) {
 			resp.Write(r)
 		}
 
-		//ctxDone, cancel := context.WithCancel(context.Background())
+		// ctxDone, cancel := context.WithCancel(context.Background())
 
 		t.StartTimer()
 		//blocksC, errC := GetBlockBodiesChanReadAll(ctxDone, r, 100)
@@ -104,7 +104,6 @@ func BenchmarkGetBlockBodiesChanByBlockWithSyncPool(t *testing.B) {
 		//}
 		//cancel()
 	}
-
 }
 
 func BenchmarkGetBlockBodiesChanByBlockWithBytePool(t *testing.B) {

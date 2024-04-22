@@ -91,5 +91,4 @@ func SendTxBatches(rtxs []*RawTx) error {
 		}
 		return nil
 	})
-
 }

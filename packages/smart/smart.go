@@ -16,15 +16,15 @@ import (
 
 	"github.com/IBAX-io/go-ibax/packages/common"
 	"github.com/IBAX-io/go-ibax/packages/common/crypto"
-	"github.com/IBAX-io/go-ibax/packages/conf"
 	"github.com/IBAX-io/go-ibax/packages/conf/syspar"
 	"github.com/IBAX-io/go-ibax/packages/consts"
 	"github.com/IBAX-io/go-ibax/packages/converter"
-	"github.com/IBAX-io/go-ibax/packages/script"
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
 	qb "github.com/IBAX-io/go-ibax/packages/storage/sqldb/queryBuilder"
 	"github.com/IBAX-io/go-ibax/packages/types"
 	"github.com/IBAX-io/go-ibax/packages/utils"
+	"github.com/IBAX-io/needle/compiler"
+	"github.com/IBAX-io/needle/vm"
 	"github.com/pkg/errors"
 
 	"github.com/shopspring/decimal"
@@ -42,13 +42,11 @@ const (
 	NewBadBlockContract = "@1NewBadBlock"
 )
 
-var (
-	builtinContract = map[string]bool{
-		CallDelayedContract: true,
-		NewUserContract:     true,
-		NewBadBlockContract: true,
-	}
-)
+var builtinContract = map[string]bool{
+	CallDelayedContract: true,
+	NewUserContract:     true,
+	NewBadBlockContract: true,
+}
 
 // SmartContract is storing smart contract data
 type SmartContract struct {
@@ -56,7 +54,7 @@ type SmartContract struct {
 	Rollback        bool
 	FullAccess      bool
 	SysUpdate       bool
-	VM              *script.VM
+	VM              *vm.VM
 	TxSmart         *types.SmartTransaction
 	TxData          map[string]any
 	TxContract      *Contract
@@ -103,7 +101,7 @@ func (sc *SmartContract) AppendStack(fn string) error {
 			}
 		}
 		cont.StackCont = append(cont.StackCont, fn)
-		sc.TxContract.Extend[script.Extend_stack] = cont.StackCont
+		sc.TxContract.Extend[vm.ExtendStack] = cont.StackCont
 	}
 	return nil
 }
@@ -113,7 +111,7 @@ func (sc *SmartContract) PopStack(fn string) {
 		cont := sc.TxContract
 		if len(cont.StackCont) > 0 {
 			cont.StackCont = cont.StackCont[:len(cont.StackCont)-1]
-			sc.TxContract.Extend[script.Extend_stack] = cont.StackCont
+			sc.TxContract.Extend[vm.ExtendStack] = cont.StackCont
 		}
 	}
 }
@@ -125,24 +123,11 @@ func (sc *SmartContract) isAllowStack(fn string) bool {
 }
 
 func InitVM() {
-	script.GetVM().SetExtendCost(getCost)
-	script.GetVM().SetFuncCallsDB(funcCallsDBP)
-	script.GetVM().Extend(&script.ExtendData{
-		Objects: EmbedFuncs(defineVMType()), AutoPars: map[string]string{
-			`*smart.SmartContract`: `sc`,
-		},
-		WriteFuncs: writeFuncs,
-	})
-}
-
-func defineVMType() script.VMType {
-	if conf.Config.IsCLB() {
-		return script.VMType_CLB
+	var v []string
+	for p := range sysVars {
+		v = append(v, p)
 	}
-	if conf.Config.IsCLBMaster() {
-		return script.VMType_CLBMaster
-	}
-	return script.VMType_Smart
+	vm.GetVM().SetExtendCost(getCost).SetFuncCallsDB(funcCallsDBP).AppendPreVar(v).SetExtendFunc(Embed())
 }
 
 // GetLogger is returning logger
@@ -156,7 +141,7 @@ func (sc *SmartContract) GetLogger() *log.Entry {
 
 func GetAllContracts() (string, error) {
 	var ret []string
-	for k := range script.GetVM().Objects {
+	for k := range vm.GetVM().Objects {
 		ret = append(ret, k)
 	}
 
@@ -166,28 +151,27 @@ func GetAllContracts() (string, error) {
 	return result, err
 }
 
-// ActivateContract sets Active status of the contract in script.GetVM()
+// ActivateContract sets Active status of the contract in vm.GetVM()
 func ActivateContract(tblid, state int64, active bool) {
-	for i, item := range script.GetVM().CodeBlock.Children {
-		if item != nil && item.Type == script.ObjectType_Contract {
+	for i, item := range vm.GetVM().CodeBlock.Children {
+		if item != nil && item.Type == compiler.CodeBlockContract {
 			cinfo := item.GetContractInfo()
-			if cinfo.Owner.TableID == tblid && cinfo.Owner.StateID == uint32(state) {
-				script.GetVM().Children[i].GetContractInfo().Owner.Active = active
+			if cinfo.Owner.TableId == tblid && cinfo.Owner.StateId == uint32(state) {
+				vm.GetVM().Children[i].GetContractInfo().Owner.Active = active
 			}
 		}
 	}
 }
 
-// SetContractWallet changes WalletID of the contract in script.GetVM()
+// SetContractWallet changes WalletID of the contract in vm.GetVM()
 func SetContractWallet(sc *SmartContract, tblid, state int64, wallet int64) error {
 	if err := validateAccess(sc, "SetContractWallet"); err != nil {
 		return err
 	}
-	for i, item := range script.GetVM().CodeBlock.Children {
-		if item != nil && item.Type == script.ObjectType_Contract {
-			cinfo := item.GetContractInfo()
-			if cinfo.Owner.TableID == tblid && cinfo.Owner.StateID == uint32(state) {
-				script.GetVM().Children[i].GetContractInfo().Owner.WalletID = wallet
+	for i, item := range vm.GetVM().CodeBlock.Children {
+		if cinfo := item.GetContractInfo(); cinfo != nil {
+			if cinfo.Owner.TableId == tblid && cinfo.Owner.StateId == uint32(state) {
+				vm.GetVM().Children[i].GetContractInfo().Owner.WalletId = wallet
 			}
 		}
 	}
@@ -208,33 +192,38 @@ func (sc *SmartContract) getExtend() map[string]any {
 	}
 	head := sc.TxSmart
 	extend := map[string]any{
-		script.Extend_type:          head.ID,
-		script.Extend_time:          sc.Timestamp,
-		script.Extend_ecosystem_id:  head.EcosystemID,
-		script.Extend_node_position: blockNodePosition,
-		script.Extend_block:         block,
-		script.Extend_key_id:        sc.Key.ID,
-		script.Extend_account_id:    sc.Key.AccountID,
-		script.Extend_block_key_id:  blockKeyID,
-		script.Extend_parent:        ``,
-		script.Extend_txcost:        sc.GetContractLimit(),
-		script.Extend_txhash:        sc.Hash,
-		//script.Extend_result:              ``,
-		script.Extend_sc:                  sc,
-		script.Extend_contract:            sc.TxContract,
-		script.Extend_block_time:          blockTime,
-		script.Extend_original_contract:   ``,
-		script.Extend_this_contract:       ``,
-		script.Extend_guest_key:           consts.GuestKey,
-		script.Extend_guest_account:       consts.GuestAddress,
-		script.Extend_black_hole_key:      converter.HoleAddrMap[converter.BlackHoleAddr].K,
-		script.Extend_black_hole_account:  converter.HoleAddrMap[converter.BlackHoleAddr].S,
-		script.Extend_white_hole_key:      converter.HoleAddrMap[converter.WhiteHoleAddr].K,
-		script.Extend_white_hole_account:  converter.HoleAddrMap[converter.WhiteHoleAddr].S,
-		script.Extend_pre_block_data_hash: perBlockHash,
-		script.Extend_gen_block:           sc.GenBlock,
-		script.Extend_time_limit:          sc.TimeLimit,
+		ExtendType:              head.ID,
+		ExtendTime:              sc.Timestamp,
+		ExtendEcosystemId:       head.EcosystemID,
+		ExtendNodePosition:      blockNodePosition,
+		ExtendBlock:             block,
+		ExtendKeyId:             sc.Key.ID,
+		ExtendAccountId:         sc.Key.AccountID,
+		ExtendBlockKeyId:        blockKeyID,
+		vm.ExtendParentContract: ``,
+		// vm.ExtendTxCost:    sc.GetContractLimit(),
+		ExtendTxhash: sc.Hash,
+		// vm.ExtendResult:           ``,
+		vm.ExtendSc:               sc,
+		ExtendContract:            sc.TxContract,
+		ExtendBlockTime:           blockTime,
+		vm.ExtendOriginalContract: ``,
+		vm.ExtendThisContract:     ``,
+		ExtendGuestKey:            consts.GuestKey,
+		ExtendGuestAccount:        consts.GuestAddress,
+		ExtendBlackHoleKey:        converter.HoleAddrMap[converter.BlackHoleAddr].K,
+		ExtendBlackHoleAccount:    converter.HoleAddrMap[converter.BlackHoleAddr].S,
+		ExtendWhiteHoleKey:        converter.HoleAddrMap[converter.WhiteHoleAddr].K,
+		ExtendWhiteHoleAccount:    converter.HoleAddrMap[converter.WhiteHoleAddr].S,
+		ExtendPreBlockDataHash:    perBlockHash,
+		vm.ExtendGenBlock:         sc.GenBlock,
+		vm.ExtendTimeLimit:        sc.TimeLimit,
 	}
+	//if ecost, ok := sc.TxContract.Extend[vm.ExtendTxCost]; ok {
+	//	extend[vm.ExtendTxCost] = ecost.(int64)
+	//} else {
+	extend[vm.ExtendTxCost] = sc.GetContractLimit()
+	//}
 	for key, val := range sc.TxData {
 		extend[key] = val
 	}
@@ -411,8 +400,10 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 			if len(cond) > 0 {
 				ret, err := sc.EvalIf(cond)
 				if err != nil {
-					logger.WithFields(log.Fields{"condition": cond, "column": name,
-						"type": consts.EvalError}).Error("evaluating condition")
+					logger.WithFields(log.Fields{
+						"condition": cond, "column": name,
+						"type": consts.EvalError,
+					}).Error("evaluating condition")
 					return err
 				}
 				checked[name] = ret
@@ -443,7 +434,8 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 }
 
 func (sc *SmartContract) CheckAccess(tableName, columns string, ecosystem int64) (table string, perm map[string]string,
-	cols string, err error) {
+	cols string, err error,
+) {
 	var collist []string
 
 	table = converter.ParseTable(tableName, ecosystem)
@@ -496,6 +488,7 @@ func (sc *SmartContract) AccessRights(condition string, iscondition bool) error 
 
 // EvalIf counts and returns the logical value of the specified expression
 func (sc *SmartContract) EvalIf(conditions string) (bool, error) {
+	sc.getExtend()[vm.ExtendTxCost] = syspar.GetMaxCost()
 	return sc.VM.EvalIf(conditions, uint32(sc.TxSmart.EcosystemID), sc.getExtend())
 }
 
@@ -556,8 +549,8 @@ func (sc *SmartContract) CallContract(point string) (string, error) {
 
 	retError := func(err error) (string, error) {
 		eText := err.Error()
-		if !strings.HasPrefix(eText, `{`) && err != script.ErrVMTimeLimit {
-			err = script.SetVMError(`panic`, eText)
+		if !strings.HasPrefix(eText, `{`) && !errors.Is(err, vm.ErrVMTimeLimit) {
+			err = vm.VMError{Type: "panic", Err: eText}
 		}
 		return ``, err
 	}
@@ -580,29 +573,29 @@ func (sc *SmartContract) CallContract(point string) (string, error) {
 		logger.WithFields(log.Fields{"type": consts.ContractError, "error": err}).Error("loop in contract")
 		return retError(err)
 	}
-	sc.VM = script.GetVM()
+	sc.VM = vm.GetVM()
 
 	ctrctExtend := sc.TxContract.Extend
-	before := ctrctExtend[script.Extend_txcost].(int64)
+	before := ctrctExtend[vm.ExtendTxCost].(int64)
 	txSizeFuel := syspar.GetSizeFuel() * sc.TxSize / 1024
-	ctrctExtend[script.Extend_txcost] = ctrctExtend[script.Extend_txcost].(int64) - txSizeFuel
+	ctrctExtend[vm.ExtendTxCost] = ctrctExtend[vm.ExtendTxCost].(int64) - txSizeFuel
 
 	_, nameContract := converter.ParseName(sc.TxContract.Name)
-	ctrctExtend[script.Extend_original_contract] = nameContract
-	ctrctExtend[script.Extend_this_contract] = nameContract
+	ctrctExtend[vm.ExtendOriginalContract] = nameContract
+	ctrctExtend[vm.ExtendThisContract] = nameContract
 
 	methods := []string{`conditions`, `action`}
-	err = script.RunContractById(sc.VM, int32(sc.TxSmart.ID), methods, sc.TxContract.Extend, sc.Hash)
-	if ctrctExtend[script.Extend_txcost].(int64) < 0 {
+	err = vm.RunContractById(sc.VM, int32(sc.TxSmart.ID), methods, sc.TxContract.Extend)
+	if ctrctExtend[vm.ExtendTxCost].(int64) < 0 {
 		sc.TxFuel = before
 	} else {
-		sc.TxFuel = before - ctrctExtend[script.Extend_txcost].(int64)
+		sc.TxFuel = before - ctrctExtend[vm.ExtendTxCost].(int64)
 	}
 	sc.TxUsedCost = decimal.New(sc.TxFuel, 0)
 
 	if err == nil {
-		if ctrctExtend[script.Extend_result] != nil {
-			result = fmt.Sprint(ctrctExtend[script.Extend_result])
+		if ctrctExtend[vm.ExtendResult] != nil {
+			result = fmt.Sprint(ctrctExtend[vm.ExtendResult])
 			if !utf8.ValidString(result) {
 				result, err = retError(errNotValidUTF)
 			}

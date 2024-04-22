@@ -5,8 +5,10 @@
 
 package sqldb
 
-const tableDelayedContracts = "1_delayed_contracts"
-const availableDelayedContracts = 0
+const (
+	tableDelayedContracts     = "1_delayed_contracts"
+	availableDelayedContracts = 0
+)
 
 // DelayedContract represents record of 1_delayed_contracts table
 type DelayedContract struct {

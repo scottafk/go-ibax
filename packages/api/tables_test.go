@@ -57,22 +57,28 @@ func TestTableName(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	form := url.Values{"Name": {`test`}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
+	form := url.Values{
+		"Name": {`test`}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
 		"conditions":{"update":"true", "read":"true"}}]`}, "ApplicationId": {"1"},
-		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`},
+	}
 	assert.EqualError(t, postTx(`NewTable`, &form),
 		`{"type":"panic","error":"Name test must only contain latin, digit and '_', '-' characters"}`)
 
-	form = url.Values{"Name": {`latin`}, "Columns": {`[{"name":"test","type":"varchar", "index": "0", 
+	form = url.Values{
+		"Name": {`latin`}, "Columns": {`[{"name":"test","type":"varchar", "index": "0", 
 		"conditions":{"update":"true", "read":"true"}}]`}, "ApplicationId": {"1"},
-		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`},
+	}
 	assert.EqualError(t, postTx(`NewTable`, &form),
 		`{"type":"panic","error":"Name latin must only contain latin, digit and '_', '-' characters"}`)
 
 	name := randName(`tbl`)
-	form = url.Values{"Name": {`tbl-` + name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
+	form = url.Values{
+		"Name": {`tbl-` + name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
 	  "conditions":{"update":"true", "read":"true"}}]`}, "ApplicationId": {"100"},
-		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`},
+	}
 	err := postTx(`NewTable`, &form)
 	if err != nil {
 		t.Error(err)
@@ -114,8 +120,10 @@ func TestTableName(t *testing.T) {
 		return
 	}
 	forTest := tplList{
-		{`DBFind(tbl-` + name + `,my).Columns("id,myname").WhereId(1)`,
-			`[{"tag":"dbfind","attr":{"columns":["id","myname"],"data":[["1","New test"]],"name":"tbl-` + name + `","source":"my","types":["text","text"],"whereid":"1"}}]`},
+		{
+			`DBFind(tbl-` + name + `,my).Columns("id,myname").WhereId(1)`,
+			`[{"tag":"dbfind","attr":{"columns":["id","myname"],"data":[["1","New test"]],"name":"tbl-` + name + `","source":"my","types":["text","text"],"whereid":"1"}}]`,
+		},
 	}
 	var retCont contentResult
 	for _, item := range forTest {
@@ -135,9 +143,11 @@ func TestJSONTable(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
 	name := randName(`json`)
-	form := url.Values{"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
+	form := url.Values{
+		"Name": {name}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "0", 
 		"conditions":"true"}, {"name":"Doc", "type":"json","index": "0", "conditions":"true"}]`},
-		"ApplicationId": {`1`}, "Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+		"ApplicationId": {`1`}, "Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`},
+	}
 	assert.NoError(t, postTx(`NewTable`, &form))
 
 	checkGet := func(want string) {
@@ -146,7 +156,8 @@ func TestJSONTable(t *testing.T) {
 		assert.Equal(t, want, msg)
 	}
 
-	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+	form = url.Values{
+		"Name": {name}, "Value": {`contract ` + name + ` {
 		action { 
 			var ret1, ret2 int
 			ret1 = DBInsert("` + name + `", {MyName: "test",Doc: "{\"type\": \"0\"}"})
@@ -160,10 +171,12 @@ func TestJSONTable(t *testing.T) {
 			DBInsert("` + name + `", {MyName: "test4",doc: "{\"languages\": {\"arr_id\":{\"1\":\"0\",\"2\":\"0\",\"3\":\"0\"}}}"})
 			DBInsert("` + name + `", {MyName: "test5",Doc: "{\"app_id\": \"33\"}"})
 		}}`}, "ApplicationId": {`1`},
-		"Conditions": {`ContractConditions("MainCondition")`}}
+		"Conditions": {`ContractConditions("MainCondition")`},
+	}
 	assert.NoError(t, postTx("NewContract", &form))
 
-	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Get {
+	form = url.Values{
+		"Name": {name}, "Value": {`contract ` + name + `Get {
 			data {
 				Id int
 			}
@@ -183,10 +196,12 @@ func TestJSONTable(t *testing.T) {
 				$result = out + Str(DBFind("` + name + `").WhereId($Id).One("doc->check")) + tmp + where +one + empty
 			}
 		}`}, "ApplicationId": {`1`},
-		"Conditions": {`ContractConditions("MainCondition")`}}
+		"Conditions": {`ContractConditions("MainCondition")`},
+	}
 	assert.NoError(t, postTx("NewContract", &form))
 
-	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Upd {
+	form = url.Values{
+		"Name": {name}, "Value": {`contract ` + name + `Upd {
 		action {
 			DBUpdate("` + name + `", 1, {"Doc": "{\"type\": \"doc\", \"ind\": \"3\", \"check\": \"33\"}"})
 			var mydoc map
@@ -194,10 +209,12 @@ func TestJSONTable(t *testing.T) {
 			mydoc["doc"] = "Some test text."
 			DBUpdate("` + name + `", 2, {"myname": "test3", "Doc": mydoc})
 		}}`}, "ApplicationId": {`1`},
-		"Conditions": {`ContractConditions("MainCondition")`}}
+		"Conditions": {`ContractConditions("MainCondition")`},
+	}
 	assert.NoError(t, postTx("NewContract", &form))
 
-	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `UpdOne {
+	form = url.Values{
+		"Name": {name}, "Value": {`contract ` + name + `UpdOne {
 			data {
 				Type int
 			}
@@ -210,7 +227,8 @@ func TestJSONTable(t *testing.T) {
 				DBUpdate("` + name + `", 3, {"doc->temp":"Temp"})
 		  }}
 		`}, "ApplicationId": {`1`},
-		"Conditions": {`ContractConditions("MainCondition")`}}
+		"Conditions": {`ContractConditions("MainCondition")`},
+	}
 	assert.NoError(t, postTx("NewContract", &form))
 	assert.NoError(t, postTx(name, &url.Values{}))
 
@@ -222,22 +240,26 @@ func TestJSONTable(t *testing.T) {
 	assert.NoError(t, postTx(name+`UpdOne`, &url.Values{"Type": {"101"}}))
 	checkGet(`101new"doc"2Test attTest attlow0`)
 
-	form = url.Values{"Name": {`res` + name}, "Value": {`contract res` + name + ` {
+	form = url.Values{
+		"Name": {`res` + name}, "Value": {`contract res` + name + ` {
 		data {
 			Id int
 		}
 		action { 
 			$result = DBFind("contracts").WhereId($Id).Row()
 		}}`}, "ApplicationId": {`1`},
-		"Conditions": {`ContractConditions("MainCondition")`}}
+		"Conditions": {`ContractConditions("MainCondition")`},
+	}
 	assert.NoError(t, postTx("NewContract", &form))
 
-	form = url.Values{"Name": {`run` + name}, "Value": {`contract run` + name + ` {
+	form = url.Values{
+		"Name": {`run` + name}, "Value": {`contract run` + name + ` {
 		action { 
 			$temp = res` + name + `("Id",10)
 			$result = $temp["id"]
 		}}`}, "ApplicationId": {`1`},
-		"Conditions": {`ContractConditions("MainCondition")`}}
+		"Conditions": {`ContractConditions("MainCondition")`},
+	}
 	assert.NoError(t, postTx("NewContract", &form))
 
 	_, msg, err := postTxResult(`run`+name, &url.Values{})
@@ -245,27 +267,47 @@ func TestJSONTable(t *testing.T) {
 	assert.Equal(t, "10", msg)
 
 	forTest := tplList{
-		{`DBFind(` + name + `).Columns("id,doc->app_id").WhereId(5).Vars(buffer)Span(#buffer_doc_app_id#)`,
-			`[{"tag":"dbfind","attr":{"columns":["id","doc.app_id"],"data":[["5","33"]],"name":"` + name + `","types":["text","text"],"whereid":"5"}},{"tag":"span","children":[{"tag":"text","text":"33"}]}]`},
-		{`DBFind(` + name + `,my).Columns("id").Where({"doc->title->text":"low"})`,
-			`[{"tag":"dbfind","attr":{"columns":["id"],"data":[["3"]],"name":"` + name + `","source":"my","types":["text"],"where":"{"doc-\u003etitle-\u003etext":"low"}"}}]`},
-		{`DBFind(` + name + `,my).Columns("id,doc->title->name").WhereId(3).Vars(prefix)Div(){#prefix_id# = #prefix_doc_title_name#}`,
-			`[{"tag":"dbfind","attr":{"columns":["id","doc.title.name"],"data":[["3","Test att"]],"name":"` + name + `","source":"my","types":["text","text"],"whereid":"3"}},{"tag":"div","children":[{"tag":"text","text":"3 = Test att"}]}]`},
-		{`DBFind(` + name + `,my).Columns("id,doc->languages->arr_id").WhereId(4).Custom(aa){Span(#doc.languages.arr_id#)}`,
-			`[{"tag":"dbfind","attr":{"columns":["id","doc.languages.arr_id","aa"],"data":[["4","{"1": "0", "2": "0", "3": "0"}","[{"tag":"span","children":[{"tag":"text","text":"{\\"1\\": \\"0\\", \\"2\\": \\"0\\", \\"3\\": \\"0\\"}"}]}]"]],"name":"` + name + `","source":"my","types":["text","text","tags"],"whereid":"4"}}]`},
-		{`DBFind(` + name + `,my).Columns("id,doc->title->name").WhereId(3)`,
-			`[{"tag":"dbfind","attr":{"columns":["id","doc.title.name"],"data":[["3","Test att"]],"name":"` + name + `","source":"my","types":["text","text"],"whereid":"3"}}]`},
-		{`DBFind(` + name + `,my).Columns("doc").WhereId(3)`,
-			`[{"tag":"dbfind","attr":{"columns":["doc","id"],"data":[["{"sub": "100", "flag": "Flag", "temp": "Temp", "title": {"name": "Test att", "text": "low"}}","3"]],"name":"` + name + `","source":"my","types":["text","text"],"whereid":"3"}}]`},
-		{`DBFind(` + name + `,my).Columns("id,doc,doc->type").Where({doc->ind:101, doc->check:33})`,
-			`[{"tag":"dbfind","attr":{"columns":["id","doc","doc.type"],"data":[["1","{"ind": "101", "type": "new\\"doc\\" val", "check": "33"}","new"doc" val"]],"name":"` + name + `","source":"my","types":["text","text","text"],"where":"{doc-\u003eind:101, doc-\u003echeck:33}"}}]`},
-		{`DBFind(` + name + `,my).Columns("id,doc,doc->type").WhereId(2).Vars(my)
+		{
+			`DBFind(` + name + `).Columns("id,doc->app_id").WhereId(5).Vars(buffer)Span(#buffer_doc_app_id#)`,
+			`[{"tag":"dbfind","attr":{"columns":["id","doc.app_id"],"data":[["5","33"]],"name":"` + name + `","types":["text","text"],"whereid":"5"}},{"tag":"span","children":[{"tag":"text","text":"33"}]}]`,
+		},
+		{
+			`DBFind(` + name + `,my).Columns("id").Where({"doc->title->text":"low"})`,
+			`[{"tag":"dbfind","attr":{"columns":["id"],"data":[["3"]],"name":"` + name + `","source":"my","types":["text"],"where":"{"doc-\u003etitle-\u003etext":"low"}"}}]`,
+		},
+		{
+			`DBFind(` + name + `,my).Columns("id,doc->title->name").WhereId(3).Vars(prefix)Div(){#prefix_id# = #prefix_doc_title_name#}`,
+			`[{"tag":"dbfind","attr":{"columns":["id","doc.title.name"],"data":[["3","Test att"]],"name":"` + name + `","source":"my","types":["text","text"],"whereid":"3"}},{"tag":"div","children":[{"tag":"text","text":"3 = Test att"}]}]`,
+		},
+		{
+			`DBFind(` + name + `,my).Columns("id,doc->languages->arr_id").WhereId(4).Custom(aa){Span(#doc.languages.arr_id#)}`,
+			`[{"tag":"dbfind","attr":{"columns":["id","doc.languages.arr_id","aa"],"data":[["4","{"1": "0", "2": "0", "3": "0"}","[{"tag":"span","children":[{"tag":"text","text":"{\\"1\\": \\"0\\", \\"2\\": \\"0\\", \\"3\\": \\"0\\"}"}]}]"]],"name":"` + name + `","source":"my","types":["text","text","tags"],"whereid":"4"}}]`,
+		},
+		{
+			`DBFind(` + name + `,my).Columns("id,doc->title->name").WhereId(3)`,
+			`[{"tag":"dbfind","attr":{"columns":["id","doc.title.name"],"data":[["3","Test att"]],"name":"` + name + `","source":"my","types":["text","text"],"whereid":"3"}}]`,
+		},
+		{
+			`DBFind(` + name + `,my).Columns("doc").WhereId(3)`,
+			`[{"tag":"dbfind","attr":{"columns":["doc","id"],"data":[["{"sub": "100", "flag": "Flag", "temp": "Temp", "title": {"name": "Test att", "text": "low"}}","3"]],"name":"` + name + `","source":"my","types":["text","text"],"whereid":"3"}}]`,
+		},
+		{
+			`DBFind(` + name + `,my).Columns("id,doc,doc->type").Where({doc->ind:101, doc->check:33})`,
+			`[{"tag":"dbfind","attr":{"columns":["id","doc","doc.type"],"data":[["1","{"ind": "101", "type": "new\\"doc\\" val", "check": "33"}","new"doc" val"]],"name":"` + name + `","source":"my","types":["text","text","text"],"where":"{doc-\u003eind:101, doc-\u003echeck:33}"}}]`,
+		},
+		{
+			`DBFind(` + name + `,my).Columns("id,doc,doc->type").WhereId(2).Vars(my)
 			Span(#my_id##my_doc_type#)`,
-			`[{"tag":"dbfind","attr":{"columns":["id","doc","doc.type"],"data":[["2","{"doc": "Some test text.", "ind": "101", "type": "new\\"doc\\""}","new"doc""]],"name":"` + name + `","source":"my","types":["text","text","text"],"whereid":"2"}},{"tag":"span","children":[{"tag":"text","text":"2new"doc""}]}]`},
-		{`DBFind(` + name + `,my).Columns("id,doc->type").WhereId(2)`,
-			`[{"tag":"dbfind","attr":{"columns":["id","doc.type"],"data":[["2","new"doc""]],"name":"` + name + `","source":"my","types":["text","text"],"whereid":"2"}}]`},
-		{`DBFind(` + name + `,my).Columns("doc->type").Order(id).Custom(mytype, OK:#doc.type#)`,
-			`[{"tag":"dbfind","attr":{"columns":["doc.type","id","mytype"],"data":[["new"doc" val","1","[{"tag":"text","text":"OK:new"doc" val"}]"],["new"doc"","2","[{"tag":"text","text":"OK:new"doc""}]"],["","3","[{"tag":"text","text":"OK:NULL"}]"],["","4","[{"tag":"text","text":"OK:NULL"}]"],["","5","[{"tag":"text","text":"OK:NULL"}]"]],"name":"` + name + `","order":"id","source":"my","types":["text","text","tags"]}}]`},
+			`[{"tag":"dbfind","attr":{"columns":["id","doc","doc.type"],"data":[["2","{"doc": "Some test text.", "ind": "101", "type": "new\\"doc\\""}","new"doc""]],"name":"` + name + `","source":"my","types":["text","text","text"],"whereid":"2"}},{"tag":"span","children":[{"tag":"text","text":"2new"doc""}]}]`,
+		},
+		{
+			`DBFind(` + name + `,my).Columns("id,doc->type").WhereId(2)`,
+			`[{"tag":"dbfind","attr":{"columns":["id","doc.type"],"data":[["2","new"doc""]],"name":"` + name + `","source":"my","types":["text","text"],"whereid":"2"}}]`,
+		},
+		{
+			`DBFind(` + name + `,my).Columns("doc->type").Order(id).Custom(mytype, OK:#doc.type#)`,
+			`[{"tag":"dbfind","attr":{"columns":["doc.type","id","mytype"],"data":[["new"doc" val","1","[{"tag":"text","text":"OK:new"doc" val"}]"],["new"doc"","2","[{"tag":"text","text":"OK:new"doc""}]"],["","3","[{"tag":"text","text":"OK:NULL"}]"],["","4","[{"tag":"text","text":"OK:NULL"}]"],["","5","[{"tag":"text","text":"OK:NULL"}]"]],"name":"` + name + `","order":"id","source":"my","types":["text","text","tags"]}}]`,
+		},
 	}
 	var ret contentResult
 	for i, item := range forTest {
@@ -283,12 +325,15 @@ func TestTableDesc(t *testing.T) {
 		return
 	}
 	name := randName(`tbl`)
-	form := url.Values{"Name": {name}, "Columns": {`[{"name":"desc","type":"varchar", "index": "0", 
+	form := url.Values{
+		"Name": {name}, "Columns": {`[{"name":"desc","type":"varchar", "index": "0", 
 	  "conditions":{"update":"true", "read":"true"}}]`}, "ApplicationId": {"1"},
-		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`},
+	}
 	assert.NoError(t, postTx(`NewTable`, &form))
 
-	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+	form = url.Values{
+		"Name": {name}, "Value": {`contract ` + name + ` {
 		action { 
 			DBInsert("` + name + `", {"desc": "test"})
 			DBUpdate("` + name + `", 1, {"desc": "new test"})
@@ -297,7 +342,8 @@ func TestTableDesc(t *testing.T) {
 		   vals = DBRow("pages").Columns("NAME, menu").Where({id:1})
 		   $result = $result + vals["name"]
 		}}`}, "ApplicationId": {"1"},
-		"Conditions": {`ContractConditions("MainCondition")`}}
+		"Conditions": {`ContractConditions("MainCondition")`},
+	}
 	assert.NoError(t, postTx("NewContract", &form))
 
 	_, msg, err := postTxResult(name, &url.Values{})

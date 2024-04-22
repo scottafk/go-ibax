@@ -95,7 +95,6 @@ func HandleTCPRequest(rw net.Conn) {
 
 // TcpListener is listening tcp address
 func TcpListener(laddr string) error {
-
 	if strings.HasPrefix(laddr, "127.") {
 		log.Warn("Listening at local address: ", laddr)
 	}

@@ -13,7 +13,6 @@ import (
 )
 
 func TestBytesPoolGet(t *testing.T) {
-
 	buf := BytesPool.Get(12832256)
 	require.Equal(t, 16777216, len(buf))
 }

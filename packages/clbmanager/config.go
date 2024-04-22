@@ -30,7 +30,6 @@ type ChildCLBConfig struct {
 }
 
 func (c ChildCLBConfig) configCommand() *exec.Cmd {
-
 	args := []string{
 		"config",
 		fmt.Sprintf("--path=%s", c.configPath()),

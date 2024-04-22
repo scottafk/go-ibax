@@ -133,6 +133,7 @@ func GetBlockCountByNode(NodePosition int64, consensusMode int32) (int64, error)
 
 	return BlockCount, err
 }
+
 func (b *BlockChain) GetRecentBlockChain(startBlockId int64, maxBlockId int64) ([]BlockChain, error) {
 	blockchain := new([]BlockChain)
 	err := DBConn.Where("id > ? and id <= ?", startBlockId, maxBlockId).Find(&blockchain).Error

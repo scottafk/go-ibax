@@ -17,11 +17,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var ErrorEmptyBlockBody = errors.New("block is empty")
-var ErrorWrongSizeBytes = errors.New("wrong size bytes")
+var (
+	ErrorEmptyBlockBody = errors.New("block is empty")
+	ErrorWrongSizeBytes = errors.New("wrong size bytes")
+)
 
-const hasVal = "has value"
-const hasntVal = "has not value"
+const (
+	hasVal   = "has value"
+	hasntVal = "has not value"
+)
 
 const sizeBytesLength = 4
 

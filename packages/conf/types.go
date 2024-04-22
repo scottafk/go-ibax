@@ -20,7 +20,7 @@ type (
 		MaxOpenConns    int // sets the maximum number of open connections to the database
 	}
 
-	//RedisConfig get redis information from config.yml
+	// RedisConfig get redis information from config.yml
 	RedisConfig struct {
 		Enable   bool
 		Host     string
@@ -99,7 +99,7 @@ type (
 		Hasher   string
 	}
 
-	//LocalConfig TODO: uncategorized
+	// LocalConfig TODO: uncategorized
 	LocalConfig struct {
 		RunNodeMode           string
 		HTTPServerMaxBodySize int64

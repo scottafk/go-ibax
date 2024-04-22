@@ -56,10 +56,12 @@ func TestGetInterfaceRow(t *testing.T) {
 func TestNewMenuNoError(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 	menuname := "myTestMenu"
-	form := url.Values{"Name": {menuname}, "Value": {`first
+	form := url.Values{
+		"Name": {menuname}, "Value": {`first
 		second
 		third`}, "Title": {`My Test Menu`},
-		"Conditions": {`true`}}
+		"Conditions": {`true`},
+	}
 	assert.NoError(t, postTx(`NewMenu`, &form))
 
 	err := postTx(`NewMenu`, &form)

@@ -41,11 +41,13 @@ const (
 	UpdateRowCoeff = 0.0001
 )
 
-var FromStatementMissingError = errors.New("FROM statement missing")
-var DeleteMinimumThreeFieldsError = errors.New("DELETE query must consist minimum of 3 fields")
-var SetStatementMissingError = errors.New("SET statement missing")
-var IntoStatementMissingError = errors.New("INTO statement missing")
-var UnknownQueryTypeError = errors.New("Unknown query type")
+var (
+	FromStatementMissingError     = errors.New("FROM statement missing")
+	DeleteMinimumThreeFieldsError = errors.New("DELETE query must consist minimum of 3 fields")
+	SetStatementMissingError      = errors.New("SET statement missing")
+	IntoStatementMissingError     = errors.New("INTO statement missing")
+	UnknownQueryTypeError         = errors.New("Unknown query type")
+)
 
 func strSliceIndex(fields []string, fieldToFind string) (index int) {
 	for i, field := range fields {
@@ -61,8 +63,7 @@ type TableRowCounter interface {
 	RowCount(*sqldb.DbTransaction, string) (int64, error)
 }
 
-type DBCountQueryRowCounter struct {
-}
+type DBCountQueryRowCounter struct{}
 
 func (d *DBCountQueryRowCounter) RowCount(transaction *sqldb.DbTransaction, tableName string) (int64, error) {
 	count, err := transaction.GetRecordsCountTx(tableName, ``)

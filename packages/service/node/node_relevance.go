@@ -91,9 +91,7 @@ func (n *NodeRelevanceService) checkNodeRelevance(ctx context.Context) (relevant
 	if r {
 		return false, nil
 	}
-	var (
-		remoteHosts []string
-	)
+	var remoteHosts []string
 	if syspar.IsHonorNodeMode() {
 		remoteHosts, err = GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
 	} else {

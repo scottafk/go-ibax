@@ -14,8 +14,10 @@ import (
 // VERSION is current version
 const VERSION = "1.4.3"
 
-const BvRollbackHash = 2
-const BvIncludeRollbackHash = 3
+const (
+	BvRollbackHash        = 2
+	BvIncludeRollbackHash = 3
+)
 
 // BlockVersion is block version
 const BlockVersion = BvIncludeRollbackHash
@@ -148,7 +150,7 @@ func SetSavePointMarkBlock(idTx string) string {
 }
 
 const (
-	UTXO_Type_First_Block  = 1 //Initialize the first block
+	UTXO_Type_First_Block  = 1 // Initialize the first block
 	UTXO_Type_Self_UTXO    = 11
 	UTXO_Type_Self_Account = 12
 	UTXO_Type_Packaging    = 20

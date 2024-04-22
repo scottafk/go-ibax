@@ -33,7 +33,7 @@ func CreatePidFile() error {
 		return err
 	}
 
-	return os.WriteFile(conf.Config.GetPidPath(), pidAndVer, 0644)
+	return os.WriteFile(conf.Config.GetPidPath(), pidAndVer, 0o644)
 }
 
 // RemovePidFile removes pid file

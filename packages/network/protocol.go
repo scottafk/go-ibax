@@ -34,8 +34,10 @@ const (
 	BlocksPerRequest int = 10
 )
 
-var ErrNotAccepted = errors.New("Not accepted")
-var ErrMaxSize = errors.New("Size greater than max size")
+var (
+	ErrNotAccepted = errors.New("Not accepted")
+	ErrMaxSize     = errors.New("Size greater than max size")
+)
 
 // SelfReaderWriter read from Reader to himself and write to io.Writer from himself
 type SelfReaderWriter interface {
@@ -92,7 +94,6 @@ func (req *GetBodiesRequest) Read(r io.Reader) error {
 }
 
 func (req *GetBodiesRequest) Write(w io.Writer) error {
-
 	if err := binary.Write(w, binary.LittleEndian, req.BlockID); err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending GetBodiesRequest blockID")
 		return err
@@ -362,6 +363,7 @@ func writeSliceWithSize(w io.Writer, value []byte, size int32) error {
 	_, err := w.Write(value)
 	return err
 }
+
 func SendRequestType(reqType int64, w io.Writer) error {
 	_, err := w.Write(converter.DecToBin(reqType, 2))
 	return err
@@ -425,6 +427,7 @@ func (resp *CandidateNodeVotingResponse) Read(r io.Reader) error {
 	resp.Data = slice
 	return nil
 }
+
 func (resp *CandidateNodeVotingResponse) Write(w io.Writer) error {
 	return writeSlice(w, resp.Data)
 }
@@ -467,6 +470,7 @@ func (resp *BroadcastNodeConnInfoResponse) Read(r io.Reader) error {
 	resp.Data = slice
 	return nil
 }
+
 func (resp *BroadcastNodeConnInfoResponse) Write(w io.Writer) error {
 	return writeSlice(w, resp.Data)
 }

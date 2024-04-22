@@ -19,7 +19,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const fileMode = 0600
+const fileMode = 0o600
 
 // generateKeysCmd represents the generateKeys command
 var generateKeysCmd = &cobra.Command{
@@ -57,7 +57,7 @@ var generateKeysCmd = &cobra.Command{
 func createFile(filename string, data []byte) error {
 	dir := filepath.Dir(filename)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err := os.Mkdir(dir, 0775)
+		err := os.Mkdir(dir, 0o775)
 		if err != nil {
 			return errors.Wrapf(err, "creating dir %s", dir)
 		}

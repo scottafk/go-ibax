@@ -10,8 +10,7 @@ import (
 	"strings"
 
 	"github.com/IBAX-io/go-ibax/packages/consts"
-	"github.com/IBAX-io/go-ibax/packages/types"
-
+	"github.com/IBAX-io/needle/compiler"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -82,16 +81,16 @@ func ParseObject(in []rune) (any, int, error) {
 	if in[0] == '[' {
 		ret = make([]any, 0)
 	} else if in[0] == '{' {
-		ret = types.NewMap()
+		ret = compiler.NewMap()
 		mapMode = true
 	} else {
 		return nil, 0, errWhere
 	}
 	addEmptyKey := func() {
 		if mapMode {
-			ret.(*types.Map).Set(key, "")
+			ret.(*compiler.Map).Set(key, "")
 		} else if len(key) > 0 {
-			ret = append(ret.([]any), types.LoadMap(map[string]any{key: ``}))
+			ret = append(ret.([]any), compiler.LoadMap(map[string]any{key: ``}))
 		}
 		key = ``
 	}
@@ -123,16 +122,16 @@ main:
 					switch v := par.(type) {
 					case map[string]any:
 						for ikey, ival := range v {
-							ret.(*types.Map).Set(ikey, ival)
+							ret.(*compiler.Map).Set(ikey, ival)
 						}
 					}
 				} else {
-					ret.(*types.Map).Set(key, par)
+					ret.(*compiler.Map).Set(key, par)
 					key = ``
 				}
 			} else {
 				if len(key) > 0 {
-					par = types.LoadMap(map[string]any{key: par})
+					par = compiler.LoadMap(map[string]any{key: par})
 					key = ``
 				}
 				ret = append(ret.([]any), par)
@@ -156,11 +155,11 @@ main:
 			}
 			if len(val) > 0 {
 				if mapMode {
-					ret.(*types.Map).Set(key, val)
+					ret.(*compiler.Map).Set(key, val)
 					key = ``
 				} else {
 					if len(key) > 0 {
-						ret = append(ret.([]any), types.LoadMap(map[string]any{key: val}))
+						ret = append(ret.([]any), compiler.LoadMap(map[string]any{key: val}))
 						key = ``
 					} else {
 						ret = append(ret.([]any), val)
@@ -179,10 +178,10 @@ main:
 	if start < i {
 		if last := trimString(in[start:i]); len(last) > 0 {
 			if mapMode {
-				ret.(*types.Map).Set(key, last)
+				ret.(*compiler.Map).Set(key, last)
 			} else {
 				if len(key) > 0 {
-					ret = append(ret.([]any), types.LoadMap(map[string]any{key: last}))
+					ret = append(ret.([]any), compiler.LoadMap(map[string]any{key: last}))
 					key = ``
 				} else {
 					ret = append(ret.([]any), last)
@@ -193,7 +192,7 @@ main:
 		}
 	}
 	switch v := ret.(type) {
-	case *types.Map:
+	case *compiler.Map:
 		if v.Size() == 0 {
 			ret = ``
 		}

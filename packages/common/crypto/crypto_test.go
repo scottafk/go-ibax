@@ -46,10 +46,9 @@ func TestGetCryptoer(t *testing.T) {
 	// 	log.Fatal(err)
 	// }
 	fmt.Println("signedDataByPriv is:", signedDataByte)
-	//signature=3045022046468a5a6c62adff1d7c6a864dae3878a34f9d07be66b71f8ba34fc5a80d0e45022100caba64be8cf53709975a6a209c5c2197b01054f9b22edf25e99dfb8ea50a0633
+	// signature=3045022046468a5a6c62adff1d7c6a864dae3878a34f9d07be66b71f8ba34fc5a80d0e45022100caba64be8cf53709975a6a209c5c2197b01054f9b22edf25e99dfb8ea50a0633
 	_, err = Verify(pub, src, signedDataByte)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 }

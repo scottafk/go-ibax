@@ -13,8 +13,10 @@ import (
 // arrays is their input parameter; this differs from the official JSONRPC spec, which allows
 // parameters of any type.
 // But, this assumption makes handling Params in our Ethereum API use-cases *so* much easier.
-type Param json.RawMessage
-type Params []Param
+type (
+	Param  json.RawMessage
+	Params []Param
+)
 
 // MarshalJSON returns m as the JSON encoding of m.
 func (m Param) MarshalJSON() ([]byte, error) {
@@ -106,7 +108,7 @@ func (p Params) UnmarshalInto(receivers ...any) error {
 func (p Params) UnmarshalValue(types []reflect.Type) (args []reflect.Value, err error) {
 	defer func() {
 		if err == nil {
-			//Set any missing args to nil. prevent fn call panic
+			// Set any missing args to nil. prevent fn call panic
 			for i := len(args); i < len(types); i++ {
 				if types[i].Kind() != reflect.Ptr {
 					args = nil
@@ -125,7 +127,7 @@ func (p Params) UnmarshalValue(types []reflect.Type) (args []reflect.Value, err 
 	}
 
 	args = make([]reflect.Value, 0, len(types))
-	for i, _ := range p {
+	for i := range p {
 		dec := json.NewDecoder(bytes.NewReader(p[i]))
 		argval := reflect.New(types[i])
 		if err := dec.Decode(argval.Interface()); err != nil {

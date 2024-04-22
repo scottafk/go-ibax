@@ -7,12 +7,11 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/IBAX-io/go-ibax/packages/consts"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-
-	"path/filepath"
 
 	"github.com/IBAX-io/go-ibax/packages/conf"
 )

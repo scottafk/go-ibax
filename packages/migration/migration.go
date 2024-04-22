@@ -121,10 +121,10 @@ func runMigrations(db database, migrationList []*migration) error {
 func InitMigrate(db database) error {
 	mig := migrations
 	if conf.Config.IsSubNode() {
-		//mig = append(mig, migrationsSub)
+		// mig = append(mig, migrationsSub)
 	}
 	if conf.Config.IsSupportingCLB() {
-		//mig = append(mig, migrationsCLB)
+		// mig = append(mig, migrationsCLB)
 	}
 	return runMigrations(db, mig)
 }

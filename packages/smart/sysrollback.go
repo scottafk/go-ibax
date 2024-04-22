@@ -8,13 +8,14 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/IBAX-io/needle/compiler"
+	"github.com/IBAX-io/needle/vm"
+
 	"github.com/IBAX-io/go-ibax/packages/common/crypto"
 	"github.com/IBAX-io/go-ibax/packages/consts"
 	"github.com/IBAX-io/go-ibax/packages/converter"
-	"github.com/IBAX-io/go-ibax/packages/script"
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
 	"github.com/IBAX-io/go-ibax/packages/types"
-
 	log "github.com/sirupsen/logrus"
 )
 
@@ -74,9 +75,9 @@ func SysRollbackColumn(dbTx *sqldb.DbTransaction, sysData SysRollData) error {
 
 // SysRollbackContract performs rollback for the contract
 func SysRollbackContract(name string, EcosystemID int64) error {
-	vm := script.GetVM()
+	vm := vm.GetVM()
 	if c := VMGetContract(vm, name, uint32(EcosystemID)); c != nil {
-		id := c.Info().ID
+		id := c.Info().Id
 		if int(id) != len(vm.Children)-1 {
 			err := fmt.Errorf(eRollbackContract, id, len(vm.Children)-1)
 			log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("rollback contract")
@@ -90,7 +91,7 @@ func SysRollbackContract(name string, EcosystemID int64) error {
 }
 
 func SysRollbackNewContract(sysData SysRollData, EcosystemID string) error {
-	contractList, err := script.ContractsList(sysData.Data)
+	contractList, err := compiler.ContractsList(sysData.Data)
 	if err != nil {
 		return err
 	}
@@ -104,29 +105,28 @@ func SysRollbackNewContract(sysData SysRollData, EcosystemID string) error {
 
 // SysFlushContract is flushing contract
 func SysFlushContract(iroot any, id int64, active bool) error {
-	root := iroot.(*script.CodeBlock)
+	root := iroot.(*compiler.CodeBlock)
 	if id != 0 {
-		if len(root.Children) != 1 || root.Children[0].Type != script.ObjectType_Contract {
-			return fmt.Errorf(`only one contract must be in the record`)
+		if len(root.Children) != 1 || root.Children[0].Type != compiler.CodeBlockContract {
+			return errOneContract
 		}
 	}
 	for i, item := range root.Children {
-		if item.Type == script.ObjectType_Contract {
-			root.Children[i].GetContractInfo().Owner.TableID = id
+		if item.Type == compiler.CodeBlockContract {
+			root.Children[i].GetContractInfo().Owner.TableId = id
 			root.Children[i].GetContractInfo().Owner.Active = active
 		}
 	}
-	script.GetVM().FlushBlock(root)
+	vm.GetVM().FlushBlock(root)
 	return nil
 }
 
 // SysSetContractWallet changes WalletID of the contract in smartVM
 func SysSetContractWallet(tblid, state int64, wallet int64) error {
-	for i, item := range script.GetVM().CodeBlock.Children {
-		if item != nil && item.Type == script.ObjectType_Contract {
-			cinfo := item.GetContractInfo()
-			if cinfo.Owner.TableID == tblid && cinfo.Owner.StateID == uint32(state) {
-				script.GetVM().Children[i].GetContractInfo().Owner.WalletID = wallet
+	for i, item := range vm.GetVM().CodeBlock.Children {
+		if info := item.GetContractInfo(); info != nil {
+			if info.Owner.TableId == tblid && info.Owner.StateId == uint32(state) {
+				vm.GetVM().Children[i].GetContractInfo().Owner.WalletId = wallet
 			}
 		}
 	}
@@ -135,21 +135,20 @@ func SysSetContractWallet(tblid, state int64, wallet int64) error {
 
 // SysRollbackEditContract rollbacks the contract
 func SysRollbackEditContract(transaction *sqldb.DbTransaction, sysData SysRollData,
-	EcosystemID string) error {
-
+	EcosystemID string,
+) error {
 	fields, err := transaction.GetOneRowTransaction(`select * from "1_contracts" where id=?`,
 		sysData.ID).String()
 	if err != nil {
 		return err
 	}
 	if len(fields["value"]) > 0 {
-		var owner *script.OwnerInfo
-		for i, item := range script.GetVM().CodeBlock.Children {
-			if item != nil && item.Type == script.ObjectType_Contract {
-				cinfo := item.GetContractInfo()
-				if cinfo.Owner.TableID == sysData.ID &&
-					cinfo.Owner.StateID == uint32(converter.StrToInt64(EcosystemID)) {
-					owner = script.GetVM().Children[i].GetContractInfo().Owner
+		var owner *compiler.OwnerInfo
+		for i, item := range vm.GetVM().CodeBlock.Children {
+			if info := item.GetContractInfo(); info != nil {
+				if info.Owner.TableId == sysData.ID &&
+					info.Owner.StateId == uint32(converter.StrToInt64(EcosystemID)) {
+					owner = vm.GetVM().Children[i].GetContractInfo().Owner
 					break
 				}
 			}
@@ -159,21 +158,23 @@ func SysRollbackEditContract(transaction *sqldb.DbTransaction, sysData SysRollDa
 			log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("getting existing contract")
 			return err
 		}
-		wallet := owner.WalletID
+		wallet := owner.WalletId
 		if len(fields["wallet_id"]) > 0 {
 			wallet = converter.StrToInt64(fields["wallet_id"])
 		}
-		root, err := script.GetVM().CompileBlock([]rune(fields["value"]),
-			&script.OwnerInfo{StateID: uint32(owner.StateID), WalletID: wallet, TokenID: owner.TokenID})
+		// root, err := script.GetVM().CompileBlock([]rune(fields["value"]),
+		//	&script.OwnerInfo{StateID: uint32(owner.StateID), WalletID: wallet, TokenID: owner.TokenID})
+		oi := &compiler.OwnerInfo{StateId: owner.StateId, TableId: owner.TableId, WalletId: wallet, TokenId: owner.TokenId, Active: owner.Active}
+		err := vm.GetVM().Compile([]rune(fields["value"]), &compiler.CompConfig{Owner: oi})
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("compiling contract")
 			return err
 		}
-		err = SysFlushContract(root, owner.TableID, owner.Active)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("flushing contract")
-			return err
-		}
+		//err = SysFlushContract(root, owner.TableID, owner.Active)
+		//if err != nil {
+		//	log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("flushing contract")
+		//	return err
+		//}
 	} else if len(fields["wallet_id"]) > 0 {
 		return SysSetContractWallet(sysData.ID, converter.StrToInt64(EcosystemID),
 			converter.StrToInt64(fields["wallet_id"]))
@@ -201,10 +202,10 @@ func SysRollbackEcosystem(dbTx *sqldb.DbTransaction, sysData SysRollData) error 
 			}
 		}
 	} else {
-		vm := script.GetVM()
-		for vm.Children[len(vm.Children)-1].Type == script.ObjectType_Contract {
+		vm := vm.GetVM()
+		for vm.Children[len(vm.Children)-1].Type == compiler.CodeBlockContract {
 			cinfo := vm.Children[len(vm.Children)-1].GetContractInfo()
-			if int64(cinfo.Owner.StateID) != sysData.ID {
+			if int64(cinfo.Owner.StateId) != sysData.ID {
 				break
 			}
 			if err := SysRollbackContract(cinfo.Name, sysData.ID); err != nil {
@@ -229,9 +230,7 @@ func SysRollbackDeactivate(sysData SysRollData) error {
 
 // SysRollbackDeleteColumn is rolling back delete column
 func SysRollbackDeleteColumn(dbTx *sqldb.DbTransaction, sysData SysRollData) error {
-	var (
-		data map[string]string
-	)
+	var data map[string]string
 	err := unmarshalJSON([]byte(sysData.Data), &data, `rollback delete to json`)
 	if err != nil {
 		return err

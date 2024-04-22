@@ -2,6 +2,7 @@ package jsonrpc
 
 import (
 	"fmt"
+
 	"github.com/IBAX-io/go-ibax/packages/consts"
 )
 

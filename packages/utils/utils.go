@@ -26,7 +26,6 @@ import (
 	"github.com/IBAX-io/go-ibax/packages/consts"
 	"github.com/IBAX-io/go-ibax/packages/converter"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 	"github.com/theckman/go-flock"
 )
@@ -304,15 +303,11 @@ func ShuffleSlice(slice []string) {
 	}
 }
 
-func UUID() string {
-	return uuid.Must(uuid.NewV4(), nil).String()
-}
-
 // MakeDirectory makes directory if is not exists
 func MakeDirectory(dir string) error {
 	if _, err := os.Stat(dir); err != nil {
 		if os.IsNotExist(err) {
-			return os.Mkdir(dir, 0775)
+			return os.Mkdir(dir, 0o775)
 		}
 		return err
 	}

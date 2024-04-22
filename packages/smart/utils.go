@@ -9,14 +9,14 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/IBAX-io/needle/compiler"
+	"github.com/IBAX-io/needle/vm"
+
 	"github.com/pkg/errors"
 
 	"github.com/IBAX-io/go-ibax/packages/conf/syspar"
 	"github.com/IBAX-io/go-ibax/packages/consts"
-	"github.com/IBAX-io/go-ibax/packages/script"
-	"github.com/IBAX-io/go-ibax/packages/types"
 	"github.com/IBAX-io/go-ibax/packages/utils"
-
 	"github.com/shopspring/decimal"
 
 	log "github.com/sirupsen/logrus"
@@ -78,7 +78,7 @@ func validateAccess(sc *SmartContract, funcName string) error {
 	return nil
 }
 
-func FillTxData(fieldInfos []*script.FieldInfo, params map[string]any) (map[string]any, error) {
+func FillTxData(fieldInfos []*compiler.FieldInfo, params map[string]any) (map[string]any, error) {
 	txData := make(map[string]any)
 	for _, fitem := range fieldInfos {
 		var (
@@ -89,20 +89,20 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]any) (map[stri
 		)
 
 		if _, ok := params[index]; !ok {
-			if fitem.ContainsTag(script.TagOptional) {
-				txData[index] = script.GetFieldDefaultValue(fitem.Original)
+			if fitem.ContainsTag(vm.TagOptional) {
+				txData[index] = compiler.GetFieldDefaultValue(fitem.Original)
 				continue
 			}
 			return nil, fmt.Errorf(eParamNotFound, index)
 		}
 
 		switch fitem.Original {
-		case script.DtBool:
+		case compiler.BOOL:
 			if v, ok = params[index].(bool); !ok {
 				err = fmt.Errorf("invalid bool type")
 				break
 			}
-		case script.DtFloat:
+		case compiler.FLOAT:
 			switch val := params[index].(type) {
 			case float64:
 				v = val
@@ -114,7 +114,7 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]any) (map[stri
 				err = fmt.Errorf("invalid float type")
 				break
 			}
-		case script.DtInt:
+		case compiler.INT:
 			switch t := params[index].(type) {
 			case int:
 				v = int64(t)
@@ -139,7 +139,7 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]any) (map[stri
 			default:
 				err = fmt.Errorf("invalid int type")
 			}
-		case script.DtAddress:
+		case compiler.ADDRESS:
 			switch t := params[index].(type) {
 			case int64:
 				v = t
@@ -148,7 +148,7 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]any) (map[stri
 			default:
 				err = fmt.Errorf("invalid int type")
 			}
-		case script.DtMoney:
+		case compiler.MONEY:
 			var s string
 			if s, ok = params[index].(string); !ok {
 				err = fmt.Errorf("invalid money type")
@@ -165,17 +165,17 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]any) (map[stri
 				err = fmt.Errorf("inconsistent with the smallest reference unit and its integer multiples")
 				break
 			}
-		case script.DtString:
+		case compiler.STRING:
 			if v, ok = params[index].(string); !ok {
 				err = fmt.Errorf("invalid string type")
 				break
 			}
-		case script.DtBytes:
+		case compiler.BYTES:
 			if v, ok = params[index].([]byte); !ok {
 				err = fmt.Errorf("invalid bytes type")
 				break
 			}
-		case script.DtArray:
+		case compiler.ARRAY:
 			if v, ok = params[index].([]any); !ok {
 				err = fmt.Errorf("invalid array type")
 				break
@@ -187,10 +187,10 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]any) (map[stri
 					for ikey, ival := range val {
 						imap[fmt.Sprint(ikey)] = ival
 					}
-					v.([]any)[i] = types.LoadMap(imap)
+					v.([]any)[i] = compiler.LoadMap(imap)
 				}
 			}
-		case script.DtMap:
+		case compiler.MAP:
 			var val map[any]any
 			if val, ok = params[index].(map[any]any); !ok {
 				err = fmt.Errorf("invalid map type")
@@ -200,15 +200,15 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]any) (map[stri
 			for ikey, ival := range val {
 				imap[fmt.Sprint(ikey)] = ival
 			}
-			v = types.LoadMap(imap)
-		case script.DtFile:
+			v = compiler.LoadMap(imap)
+		case compiler.FILE:
 			var val map[string]any
 			if val, ok = params[index].(map[string]any); !ok {
 				err = fmt.Errorf("invalid file type")
 				break
 			}
 
-			if v, ok = types.NewFileFromMap(val); !ok {
+			if v, ok = compiler.NewFileFromMap(val); !ok {
 				err = fmt.Errorf("invalid attrs of file")
 				break
 			}

@@ -3,8 +3,11 @@ package smart
 import (
 	"strings"
 
+	"github.com/IBAX-io/needle/compiler"
+
+	"github.com/IBAX-io/needle/vm"
+
 	"github.com/IBAX-io/go-ibax/packages/consts"
-	"github.com/IBAX-io/go-ibax/packages/script"
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
 )
 
@@ -18,10 +21,10 @@ type Contract struct {
 	TableAccounts string
 	StackCont     []any // Stack of called contracts
 	Extend        map[string]any
-	Block         *script.CodeBlock
+	Block         *compiler.CodeBlock
 }
 
-func (c *Contract) Info() *script.ContractInfo {
+func (c *Contract) Info() *compiler.ContractInfo {
 	return c.Block.GetContractInfo()
 }
 
@@ -33,7 +36,7 @@ func LoadContracts() error {
 		return logErrorDB(err, "getting count of contracts")
 	}
 
-	defer script.GetVM().FlushExtern()
+	defer vm.GetVM().FlushExtern()
 	var offset int
 	listCount := consts.ContractList
 	for ; int64(offset) < count; offset += listCount {
@@ -50,10 +53,9 @@ func LoadContracts() error {
 
 // LoadContract reads and compiles contract of new state
 func LoadContract(transaction *sqldb.DbTransaction, ecosystem int64) (err error) {
-
 	contract := &sqldb.Contract{}
 
-	defer script.GetVM().FlushExtern()
+	// defer vm.GetVM().FlushExtern()
 	list, err := contract.GetFromEcosystem(transaction, ecosystem)
 	if err != nil {
 		return logErrorDB(err, "selecting all contracts from ecosystem")
@@ -64,20 +66,20 @@ func LoadContract(transaction *sqldb.DbTransaction, ecosystem int64) (err error)
 	return
 }
 
-func VMGetContract(vm *script.VM, name string, state uint32) *Contract {
+func VMGetContract(vm *vm.VM, name string, state uint32) *Contract {
 	if len(name) == 0 {
 		return nil
 	}
-	name = script.StateName(state, name)
+	name = compiler.StateName(state, name)
 	obj, ok := vm.Objects[name]
 
-	if ok && obj.Type == script.ObjectType_Contract {
+	if ok && obj.IsCodeBlockContract() {
 		return &Contract{Name: name, Block: obj.GetCodeBlock()}
 	}
 	return nil
 }
 
-func VMGetContractByID(vm *script.VM, id int32) *Contract {
+func VMGetContractByID(vm *vm.VM, id int32) *Contract {
 	var tableID int64
 	if id > consts.ShiftContractID {
 		tableID = int64(id - consts.ShiftContractID)
@@ -87,65 +89,74 @@ func VMGetContractByID(vm *script.VM, id int32) *Contract {
 	if len(vm.Children) <= int(idcont) {
 		return nil
 	}
-	if vm.Children[idcont] == nil || vm.Children[idcont].Type != script.ObjectType_Contract {
+	if vm.Children[idcont] == nil || vm.Children[idcont].Type != compiler.CodeBlockContract {
 		return nil
 	}
-	if tableID > 0 && vm.Children[idcont].GetContractInfo().Owner.TableID != tableID {
+	if tableID > 0 && vm.Children[idcont].GetContractInfo().Owner.TableId != tableID {
 		return nil
 	}
-	return &Contract{Name: vm.Children[idcont].GetContractInfo().Name,
-		Block: vm.Children[idcont]}
+	return &Contract{
+		Name:  vm.Children[idcont].GetContractInfo().Name,
+		Block: vm.Children[idcont],
+	}
 }
 
 // GetContract returns true if the contract exists in smartVM
 func GetContract(name string, state uint32) *Contract {
-	return VMGetContract(script.GetVM(), name, state)
+	return VMGetContract(vm.GetVM(), name, state)
 }
 
 // GetUsedContracts returns the list of contracts which are called from the specified contract
 func GetUsedContracts(name string, state uint32, full bool) []string {
-	return vmGetUsedContracts(script.GetVM(), name, state, full)
+	return vmGetUsedContracts(vm.GetVM(), name, state, full)
 }
 
 // GetContractByID returns true if the contract exists
 func GetContractByID(id int32) *Contract {
-	return VMGetContractByID(script.GetVM(), id)
+	return VMGetContractByID(vm.GetVM(), id)
 }
 
 // GetFunc returns the block of the specified function in the contract
-func (contract *Contract) GetFunc(name string) *script.CodeBlock {
-	if block, ok := (*contract).Block.Objects[name]; ok && block.Type == script.ObjectType_Func {
+func (contract *Contract) GetFunc(name string) *compiler.CodeBlock {
+	if block, ok := (*contract).Block.Objects[name]; ok && block.IsCodeBlockFunction() {
 		return block.GetCodeBlock()
 	}
 	return nil
 }
 
 func loadContractList(list []sqldb.Contract) error {
-	if script.GetVM().ShiftContract == 0 {
-		script.LoadSysFuncs(script.GetVM(), 1)
-		script.GetVM().ShiftContract = int64(len(script.GetVM().Children) - 1)
-	}
-
-	for _, item := range list {
-		clist, err := script.ContractsList(item.Value)
+	if vm.GetVM().ShiftContract == 0 {
+		err := LoadSysFuncs(vm.GetVM(), 1)
 		if err != nil {
 			return err
 		}
-		owner := script.OwnerInfo{
-			StateID:  uint32(item.EcosystemID),
-			Active:   false,
-			TableID:  item.ID,
-			WalletID: item.WalletID,
-			TokenID:  item.TokenID,
+		vm.GetVM().ShiftContract = int64(len(vm.GetVM().Children) - 1)
+	}
+
+	for _, item := range list {
+		clist, err := compiler.ContractsList(item.Value)
+		if err != nil {
+			return err
 		}
-		if err = script.GetVM().Compile([]rune(item.Value), &owner); err != nil {
+		owner := compiler.OwnerInfo{
+			StateId:  uint32(item.EcosystemID),
+			Active:   false,
+			TableId:  item.ID,
+			WalletId: item.WalletID,
+			TokenId:  item.TokenID,
+		}
+		if err = vm.GetVM().Compile([]rune(item.Value), &compiler.CompConfig{
+			Owner:     &owner,
+			IgnoreObj: vm.GetVM().Extern,
+		}); err != nil {
 			logErrorValue(err, consts.EvalError, "Load Contract", strings.Join(clist, `,`))
+			return err
 		}
 	}
 	return nil
 }
 
-func vmGetUsedContracts(vm *script.VM, name string, state uint32, full bool) []string {
+func vmGetUsedContracts(vm *vm.VM, name string, state uint32, full bool) []string {
 	contract := VMGetContract(vm, name, state)
 	if contract == nil || contract.Info().Used == nil {
 		return nil

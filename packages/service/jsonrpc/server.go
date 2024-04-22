@@ -6,9 +6,10 @@ package jsonrpc
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"sync/atomic"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Server struct {

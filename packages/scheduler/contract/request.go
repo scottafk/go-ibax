@@ -70,8 +70,10 @@ func NodeContract(Name string) (result contractResult, err error) {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing node uid")
 		return
 	}
-	form := url.Values{"pubkey": {NodePublicKey}, "signature": {hex.EncodeToString(sign)},
-		`ecosystem`: {converter.Int64ToStr(1)}}
+	form := url.Values{
+		"pubkey": {NodePublicKey}, "signature": {hex.EncodeToString(sign)},
+		`ecosystem`: {converter.Int64ToStr(1)},
+	}
 	var logret authResult
 	err = sendAPIRequest(`POST`, `login`, &form, &logret, auth)
 	if err != nil {

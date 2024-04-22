@@ -13,7 +13,7 @@ import (
 	"github.com/IBAX-io/go-ibax/packages/converter"
 	"github.com/IBAX-io/go-ibax/packages/pbgo"
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
-	"github.com/IBAX-io/go-ibax/packages/types"
+	"github.com/IBAX-io/needle/compiler"
 	"github.com/gogo/protobuf/sortkeys"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
@@ -93,7 +93,7 @@ func (f *FuelCategory) Detail() (string, any) {
 }
 
 func (f *FuelCategory) FeesInfo() any {
-	detail := types.NewMap()
+	detail := compiler.NewMap()
 	detail.Set("decimal", f.Decimal)
 	detail.Set("value", f.Fees())
 	detail.Set("conversion_rate", f.ConversionRate)
@@ -124,7 +124,7 @@ func (c Combustion) Fees(sum decimal.Decimal) decimal.Decimal {
 }
 
 func (c Combustion) Detail(sum decimal.Decimal) any {
-	detail := types.NewMap()
+	detail := compiler.NewMap()
 	combustion := c.Fees(sum)
 	detail.Set("flag", c.Flag)
 	detail.Set("percent", c.Percent)
@@ -171,7 +171,7 @@ func (pay *PaymentInfo) GetEstimate() decimal.Decimal {
 }
 
 func (pay *PaymentInfo) Detail() any {
-	detail := types.NewMap()
+	detail := compiler.NewMap()
 	for i := 0; i < len(pay.FuelCategories); i++ {
 		detail.Set(pay.FuelCategories[i].Detail())
 	}
@@ -186,7 +186,7 @@ func (pay *PaymentInfo) Detail() any {
 
 func (pay *PaymentInfo) DetailCombustion() any {
 	c := pay.Combustion
-	detail := types.NewMap()
+	detail := compiler.NewMap()
 	var money decimal.Decimal
 	for i := 0; i < len(pay.FuelCategories); i++ {
 		f := pay.FuelCategories[i]
@@ -342,7 +342,7 @@ func (sc *SmartContract) payTaxes(pay *PaymentInfo, sum decimal.Decimal, t GasSc
 		return err
 	}
 	var (
-		values *types.Map
+		values *compiler.Map
 		fromIDBalance,
 		toIDBalance decimal.Decimal
 		err error
@@ -355,7 +355,7 @@ func (sc *SmartContract) payTaxes(pay *PaymentInfo, sum decimal.Decimal, t GasSc
 	} else {
 		if _, _, err := sc.updateWhere(
 			[]string{`-amount`}, []any{sum}, "1_keys",
-			types.LoadMap(map[string]any{
+			compiler.LoadMap(map[string]any{
 				`id`:        pay.FromID,
 				`ecosystem`: pay.TokenEco,
 			})); err != nil {
@@ -363,7 +363,7 @@ func (sc *SmartContract) payTaxes(pay *PaymentInfo, sum decimal.Decimal, t GasSc
 		}
 		if _, _, err := sc.updateWhere(
 			[]string{"+amount"}, []any{sum}, "1_keys",
-			types.LoadMap(map[string]any{
+			compiler.LoadMap(map[string]any{
 				"id":        toID,
 				"ecosystem": pay.TokenEco,
 			})); err != nil {
@@ -377,7 +377,7 @@ func (sc *SmartContract) payTaxes(pay *PaymentInfo, sum decimal.Decimal, t GasSc
 		}
 	}
 
-	values = types.LoadMap(map[string]any{
+	values = compiler.LoadMap(map[string]any{
 		"sender_id":         pay.FromID,
 		"sender_balance":    fromIDBalance,
 		"recipient_id":      toID,
@@ -416,7 +416,7 @@ func (sc *SmartContract) hasExistKeyID(eco, id int64) error {
 		return err
 	}
 	if !found {
-		_, _, err = DBInsert(sc, "@1keys", types.LoadMap(map[string]any{
+		_, _, err = DBInsert(sc, "@1keys", compiler.LoadMap(map[string]any{
 			"id":        id,
 			"account":   converter.IDToAddress(id),
 			"ecosystem": eco,
@@ -429,7 +429,7 @@ func (sc *SmartContract) hasExistKeyID(eco, id int64) error {
 	if foundOne, err := keyOne.SetTablePrefix(1).Get(sc.DbTransaction, id); err != nil {
 		return err
 	} else if !foundOne {
-		_, _, err = DBInsert(sc, "@1keys", types.LoadMap(map[string]any{
+		_, _, err = DBInsert(sc, "@1keys", compiler.LoadMap(map[string]any{
 			"id":        id,
 			"account":   converter.IDToAddress(id),
 			"ecosystem": 1,
@@ -451,9 +451,9 @@ func (sc *SmartContract) getFromIdAndPayType(eco int64) (int64, PaymentType) {
 	paymentType = PaymentType_ContractCaller
 	fromID = sc.TxSmart.KeyID
 
-	if ownerInfo.WalletID != 0 {
+	if ownerInfo.WalletId != 0 {
 		paymentType = PaymentType_ContractBinder
-		fromID = ownerInfo.WalletID
+		fromID = ownerInfo.WalletId
 		return fromID, paymentType
 	}
 
@@ -623,7 +623,7 @@ func (sc *SmartContract) getChangeAddress(eco int64) ([]*PaymentInfo, error) {
 
 func (sc *SmartContract) prepareMultiPay() error {
 	ownerInfo := sc.TxContract.Info().Owner
-	if err := sc.appendTokens(ownerInfo.TokenID, sc.TxSmart.EcosystemID); err != nil {
+	if err := sc.appendTokens(ownerInfo.TokenId, sc.TxSmart.EcosystemID); err != nil {
 		return err
 	}
 

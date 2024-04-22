@@ -48,7 +48,6 @@ func TestRequestType(t *testing.T) {
 	require.NoError(t, result.Read(b))
 	require.Equal(t, rt, result)
 	fmt.Println(rt, result)
-
 }
 
 func TestGetBodyResponse(t *testing.T) {
@@ -61,7 +60,6 @@ func TestGetBodyResponse(t *testing.T) {
 	require.NoError(t, result.Read(b))
 	require.Equal(t, rt, result)
 	fmt.Println(rt, result)
-
 }
 
 func TestBodyResponse(t *testing.T) {
@@ -74,5 +72,4 @@ func TestBodyResponse(t *testing.T) {
 	require.NoError(t, result.Read(b))
 	require.Equal(t, rt.Data, result.Data)
 	fmt.Println(rt, result)
-
 }

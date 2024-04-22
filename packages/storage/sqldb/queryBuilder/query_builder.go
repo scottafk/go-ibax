@@ -16,7 +16,7 @@ import (
 	"github.com/IBAX-io/go-ibax/packages/conf/syspar"
 	"github.com/IBAX-io/go-ibax/packages/consts"
 	"github.com/IBAX-io/go-ibax/packages/converter"
-	"github.com/IBAX-io/go-ibax/packages/types"
+	"github.com/IBAX-io/needle/compiler"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -51,7 +51,7 @@ type SQLQueryBuilder struct {
 	Fields       []string
 	FieldValues  []any
 	stringValues []string
-	Where        *types.Map
+	Where        *compiler.Map
 	KeyTableChkr KeyTableChecker
 	whereExpr    string
 	TxEcoID      int64

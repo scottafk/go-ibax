@@ -15,6 +15,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/IBAX-io/needle/compiler"
+	"github.com/IBAX-io/needle/vm"
+
 	"github.com/IBAX-io/go-ibax/packages/pbgo"
 
 	"github.com/IBAX-io/go-ibax/packages/common/crypto"
@@ -24,10 +27,8 @@ import (
 	"github.com/IBAX-io/go-ibax/packages/converter"
 	"github.com/IBAX-io/go-ibax/packages/language"
 	"github.com/IBAX-io/go-ibax/packages/migration"
-	"github.com/IBAX-io/go-ibax/packages/script"
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
 	qb "github.com/IBAX-io/go-ibax/packages/storage/sqldb/queryBuilder"
-	"github.com/IBAX-io/go-ibax/packages/types"
 	"github.com/IBAX-io/go-ibax/packages/utils"
 	"github.com/IBAX-io/go-ibax/packages/utils/metric"
 	"github.com/pkg/errors"
@@ -169,7 +170,7 @@ func UpdatePlatformParam(sc *SmartContract, name, value, conditions string) (int
 		values = append(values, value)
 	}
 	if len(conditions) > 0 {
-		if err := script.VMCompileEval(sc.VM, conditions, 0); err != nil {
+		if err := vm.CompileEval(sc.VM, conditions, 0); err != nil {
 			return 0, logErrorValue(err, consts.EvalError, "compiling eval", conditions)
 		}
 		fields = append(fields, "conditions")
@@ -220,12 +221,13 @@ func Str(v any) (ret string) {
 
 // Money converts the value into a numeric type for money
 func Money(v any) (decimal.Decimal, error) {
-	return script.ValueToDecimal(v)
+	return vm.ValueToDecimal(v)
 }
 
 // Float converts the value to float64
 func Float(v any) (ret float64) {
-	return script.ValueToFloat(v)
+	ret, _ = vm.ValueToFloat(v)
+	return
 }
 
 // Join is joining input with separator
@@ -306,8 +308,10 @@ func CreateLanguage(sc *SmartContract, name, trans string) (id int64, err error)
 	if err = language.UpdateLang(int(sc.TxSmart.EcosystemID), name, trans); err != nil {
 		return 0, err
 	}
-	if _, id, err = DBInsert(sc, `@1languages`, types.LoadMap(map[string]any{"name": name,
-		"ecosystem": idStr, "res": trans})); err != nil {
+	if _, id, err = DBInsert(sc, `@1languages`, compiler.LoadMap(map[string]any{
+		"name":      name,
+		"ecosystem": idStr, "res": trans,
+	})); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
 		return 0, err
 	}
@@ -323,7 +327,7 @@ func EditLanguage(sc *SmartContract, id int64, name, trans string) error {
 		return err
 	}
 	if _, err := DBUpdate(sc, `@1languages`, id,
-		types.LoadMap(map[string]any{"name": name, "res": trans})); err != nil {
+		compiler.LoadMap(map[string]any{"name": name, "res": trans})); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
 		return err
 	}
@@ -341,7 +345,7 @@ func GetContractByName(sc *SmartContract, name string) int64 {
 		return 0
 	}
 
-	return info.Owner.TableID
+	return info.Owner.TableId
 }
 
 // GetContractById returns the name of the contract with this id
@@ -354,7 +358,7 @@ func GetContractById(sc *SmartContract, id int64) string {
 
 	re := regexp.MustCompile(`(?is)^\s*contract\s+([\d\w_]+)\s*{`)
 	var val string
-	if v, found := ret[0].(*types.Map).Get("value"); found {
+	if v, found := ret[0].(*compiler.Map).Get("value"); found {
 		val = v.(string)
 	}
 	names := re.FindStringSubmatch(val)
@@ -434,27 +438,31 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 
 	sc.FullAccess = true
 
-	if _, _, err = DBInsert(sc, "@1parameters", types.LoadMap(map[string]any{
+	if _, _, err = DBInsert(sc, "@1parameters", compiler.LoadMap(map[string]any{
 		"name": "ecosystem_wallet", "value": "0", "conditions": `ContractConditions("DeveloperCondition")`,
 		"ecosystem": idStr,
 	})); err != nil {
 		return 0, logErrorDB(err, "inserting system parameter")
 	}
 
-	if _, _, err = DBInsert(sc, "@1applications", types.LoadMap(map[string]any{
+	if _, _, err = DBInsert(sc, "@1applications", compiler.LoadMap(map[string]any{
 		"name":       "System",
 		"conditions": `ContractConditions("MainCondition")`,
 		"ecosystem":  id,
 	})); err != nil {
 		return 0, logErrorDB(err, "inserting application")
 	}
-	if _, _, err = DBInsert(sc, `@1pages`, types.LoadMap(map[string]any{"ecosystem": idStr,
-		"name": "default_page", "app_id": appID, "value": SysParamString("default_ecosystem_page"),
-		"menu": "default_menu", "conditions": `ContractConditions("DeveloperCondition")`})); err != nil {
+	if _, _, err = DBInsert(sc, `@1pages`, compiler.LoadMap(map[string]any{
+		"ecosystem": idStr,
+		"name":      "default_page", "app_id": appID, "value": SysParamString("default_ecosystem_page"),
+		"menu": "default_menu", "conditions": `ContractConditions("DeveloperCondition")`,
+	})); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}
-	if _, _, err = DBInsert(sc, `@1menu`, types.LoadMap(map[string]any{"ecosystem": idStr,
-		"name": "default_menu", "value": SysParamString("default_ecosystem_menu"), "title": "default", "conditions": `ContractConditions("DeveloperCondition")`})); err != nil {
+	if _, _, err = DBInsert(sc, `@1menu`, compiler.LoadMap(map[string]any{
+		"ecosystem": idStr,
+		"name":      "default_menu", "value": SysParamString("default_ecosystem_menu"), "title": "default", "conditions": `ContractConditions("DeveloperCondition")`,
+	})); err != nil {
 		return 0, logErrorDB(err, "inserting default menu")
 	}
 
@@ -468,11 +476,11 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 
 	if Len(ret) > 0 {
-		if v, found := ret[0].(*types.Map).Get("pub"); found {
+		if v, found := ret[0].(*compiler.Map).Get("pub"); found {
 			pub = v.(string)
 		}
 	}
-	if _, _, err := DBInsert(sc, `@1keys`, types.LoadMap(map[string]any{
+	if _, _, err := DBInsert(sc, `@1keys`, compiler.LoadMap(map[string]any{
 		"id":        wallet,
 		"account":   converter.AddressToString(wallet),
 		"pub":       pub,
@@ -484,7 +492,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	sc.FullAccess = false
 	// because of we need to know which ecosystem to rollback.
 	// All tables will be deleted so it's no need to rollback data from tables
-	if _, _, err := DBInsert(sc, "@1ecosystems", types.LoadMap(map[string]any{
+	if _, _, err := DBInsert(sc, "@1ecosystems", compiler.LoadMap(map[string]any{
 		"id":   id,
 		"name": name,
 	})); err != nil {
@@ -500,7 +508,7 @@ func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
 	}
 
 	_, err := DBUpdate(sc, "@1ecosystems", sysID,
-		types.LoadMap(map[string]any{"name": newName}))
+		compiler.LoadMap(map[string]any{"name": newName}))
 	return err
 }
 
@@ -622,7 +630,7 @@ func DBCollectMetrics(sc *SmartContract) []any {
 // JSONDecode converts json string to object
 func JSONDecode(input string) (ret any, err error) {
 	err = unmarshalJSON([]byte(input), &ret, "unmarshalling json")
-	ret = types.ConvertMap(ret)
+	ret = compiler.ConvertMap(ret)
 	return
 }
 
@@ -632,7 +640,7 @@ func JSONEncodeIndent(input any, indent string) (string, error) {
 	if rv.Kind() == reflect.Ptr {
 		rv = rv.Elem()
 	}
-	if rv.Kind() == reflect.Struct && reflect.TypeOf(input).String() != `*types.Map` {
+	if rv.Kind() == reflect.Struct && reflect.TypeOf(input).String() != `*compiler.Map` {
 		return "", logErrorfShort(eTypeJSON, input, consts.TypeError)
 	}
 	var (
@@ -690,7 +698,7 @@ func RegexpMatch(str, reg string) bool {
 	return re.MatchString(str)
 }
 
-func DBCount(sc *SmartContract, tableName string, inWhere *types.Map) (count int64, err error) {
+func DBCount(sc *SmartContract, tableName string, inWhere *compiler.Map) (count int64, err error) {
 	tblname := qb.GetTableName(sc.TxSmart.EcosystemID, tableName)
 	where, err := qb.GetWhere(inWhere)
 	if err != nil {
@@ -707,20 +715,21 @@ func MathMod(x, y float64) float64 {
 func MathModDecimal(x, y decimal.Decimal) decimal.Decimal {
 	return x.Mod(y)
 }
+
 func TransferSelf(sc *SmartContract, value string, source string, target string) (flag bool, err error) {
 	fromID := sc.TxSmart.KeyID
 	outputsMap := sc.OutputsMap
 	txInputsMap := sc.TxInputsMap
 	txOutputsMap := sc.TxOutputsMap
-	//txHash := sc.Hash
+	// txHash := sc.Hash
 	ecosystem := sc.TxSmart.EcosystemID
 	blockId := sc.BlockHeader.BlockId
-	//dbTx := sc.DbTransaction
+	// dbTx := sc.DbTransaction
 	keyUTXO := sqldb.KeyUTXO{Ecosystem: ecosystem, KeyId: fromID}
-	//sum, _ := decimal.NewFromString(value)
+	// sum, _ := decimal.NewFromString(value)
 	payValue, _ := decimal.NewFromString(value)
 	status := pbgo.TxInvokeStatusCode_SUCCESS
-	var values *types.Map
+	var values *compiler.Map
 	var balance decimal.Decimal
 	if strings.EqualFold("UTXO", source) && strings.EqualFold("Account", target) {
 
@@ -738,9 +747,9 @@ func TransferSelf(sc *SmartContract, value string, source string, target string)
 
 		if totalAmount.GreaterThanOrEqual(payValue) && payValue.GreaterThan(decimal.Zero) {
 			flag = true // The transfer was successful
-			//txOutputs = append(txOutputs, sqldb.SpentInfo{OutputKeyId: toID, OutputValue: value, BlockId: blockId, Ecosystem: ecosystem})
+			// txOutputs = append(txOutputs, sqldb.SpentInfo{OutputKeyId: toID, OutputValue: value, BlockId: blockId, Ecosystem: ecosystem})
 			totalAmount = totalAmount.Sub(payValue)
-			if _, _, err := sc.updateWhere([]string{"+amount"}, []any{payValue}, "1_keys", types.LoadMap(map[string]any{"id": fromID, "ecosystem": ecosystem})); err != nil {
+			if _, _, err := sc.updateWhere([]string{"+amount"}, []any{payValue}, "1_keys", compiler.LoadMap(map[string]any{"id": fromID, "ecosystem": ecosystem})); err != nil {
 				return false, err
 			}
 			if balance, err = sc.accountBalanceSingle(ecosystem, fromID); err != nil {
@@ -761,7 +770,7 @@ func TransferSelf(sc *SmartContract, value string, source string, target string)
 		if len(txOutputs) > 0 {
 			sqldb.PutAllOutputsMap(txOutputs, txOutputsMap)
 		}
-		values = types.LoadMap(map[string]any{
+		values = compiler.LoadMap(map[string]any{
 			"sender_id":         fromID,
 			"sender_balance":    balance,
 			"recipient_id":      fromID,
@@ -793,7 +802,7 @@ func TransferSelf(sc *SmartContract, value string, source string, target string)
 			flag = true // The transfer was successful
 			txOutputs = append(txOutputs, sqldb.SpentInfo{OutputIndex: 0, OutputKeyId: fromID, OutputValue: value, BlockId: blockId, Ecosystem: ecosystem, Type: consts.UTXO_Type_Self_Account})
 			totalAmount = totalAmount.Sub(payValue)
-			if _, _, err = sc.updateWhere([]string{`-amount`}, []any{payValue}, "1_keys", types.LoadMap(map[string]any{`id`: fromID, `ecosystem`: ecosystem})); err != nil {
+			if _, _, err = sc.updateWhere([]string{`-amount`}, []any{payValue}, "1_keys", compiler.LoadMap(map[string]any{`id`: fromID, `ecosystem`: ecosystem})); err != nil {
 				return false, err
 			}
 			if balance, err = sc.accountBalanceSingle(ecosystem, fromID); err != nil {
@@ -805,7 +814,7 @@ func TransferSelf(sc *SmartContract, value string, source string, target string)
 		if len(txOutputs) > 0 {
 			sqldb.PutAllOutputsMap(txOutputs, txOutputsMap)
 		}
-		values = types.LoadMap(map[string]any{
+		values = compiler.LoadMap(map[string]any{
 			"sender_id":         fromID,
 			"sender_balance":    balance,
 			"recipient_id":      fromID,
@@ -831,7 +840,6 @@ func TransferSelf(sc *SmartContract, value string, source string, target string)
 }
 
 func UtxoToken(sc *SmartContract, toID int64, value string) (flag bool, err error) {
-
 	cache := sc.PrevSysPar
 	getParams := func(name string) (map[int64]string, error) {
 		res := make(map[int64]string)
@@ -851,8 +859,8 @@ func UtxoToken(sc *SmartContract, toID int64, value string) (flag bool, err erro
 		}
 		return res, nil
 	}
-	var fuels = make(map[int64]string)
-	var wallets = make(map[int64]string)
+	fuels := make(map[int64]string)
+	wallets := make(map[int64]string)
 	var expediteFee decimal.Decimal
 	fuels, err = getParams(syspar.FuelRate)
 	wallets, err = getParams(syspar.TaxesWallet)
@@ -863,16 +871,16 @@ func UtxoToken(sc *SmartContract, toID int64, value string) (flag bool, err erro
 	txOutputsMap := sc.TxOutputsMap
 	ecoParams := sc.EcoParams
 
-	var comPercents = make(map[int64]int64)
+	comPercents := make(map[int64]int64)
 	for _, eco := range ecoParams {
 		comPercents[eco.Id] = eco.Percent
 	}
-	var ecoDigits = make(map[int64]int)
+	ecoDigits := make(map[int64]int)
 	for _, eco := range ecoParams {
 		ecoDigits[eco.Id] = eco.Digits
 	}
 
-	//txHash := sc.Hash
+	// txHash := sc.Hash
 	ecosystem := sc.TxSmart.EcosystemID
 
 	ecoDigits1 := consts.MoneyDigits
@@ -880,7 +888,7 @@ func UtxoToken(sc *SmartContract, toID int64, value string) (flag bool, err erro
 	ecoDigits2 := ecoDigits[ecosystem]
 
 	blockId := sc.BlockHeader.BlockId
-	//dbTx := sc.DbTransaction
+	// dbTx := sc.DbTransaction
 	keyUTXO := sqldb.KeyUTXO{Ecosystem: ecosystem, KeyId: fromID}
 
 	txInputs := sqldb.GetUnusedOutputsMap(keyUTXO, outputsMap)
@@ -922,9 +930,9 @@ func UtxoToken(sc *SmartContract, toID int64, value string) (flag bool, err erro
 				outputValue1, _ := decimal.NewFromString(input1.OutputValue)
 				totalAmount1 = totalAmount1.Add(outputValue1)
 			}
-			var money1 = decimal.Zero
-			var fuelRate1 = decimal.Zero
-			var taxes1 = decimal.Zero
+			money1 := decimal.Zero
+			fuelRate1 := decimal.Zero
+			taxes1 := decimal.Zero
 			if ret, ok := fuels[ecosystem1]; ok {
 
 				fuelRate1, err = decimal.NewFromString(ret)
@@ -971,9 +979,9 @@ func UtxoToken(sc *SmartContract, toID int64, value string) (flag bool, err erro
 		// rule : taxes ecosystem 2
 		{
 			ecosystem2 := ecosystem
-			var money2 = decimal.Zero
-			var fuelRate2 = decimal.Zero
-			var taxes2 = decimal.Zero
+			money2 := decimal.Zero
+			fuelRate2 := decimal.Zero
+			taxes2 := decimal.Zero
 			ret, ok := fuels[ecosystem2]
 			percent, hasPercent := comPercents[ecosystem2]
 			if ok && hasPercent {
@@ -1022,9 +1030,9 @@ func UtxoToken(sc *SmartContract, toID int64, value string) (flag bool, err erro
 	// if : ecosystem = 1 , rule : taxes ecosystem 1
 	if ecosystem == consts.DefaultTokenEcosystem {
 		ecosystem1 := int64(consts.DefaultTokenEcosystem)
-		var money1 = decimal.Zero
-		var fuelRate1 = decimal.Zero
-		var taxes1 = decimal.Zero
+		money1 := decimal.Zero
+		fuelRate1 := decimal.Zero
+		taxes1 := decimal.Zero
 		if ret, ok := fuels[ecosystem1]; ok {
 
 			fuelRate1, err = decimal.NewFromString(ret)

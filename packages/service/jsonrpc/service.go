@@ -169,7 +169,6 @@ func (s *serviceRegistry) runBatch(reqCtx RequestContext, reqs []*Request) {
 		}
 		callBuffer.write(reqCtx, false)
 	})
-
 }
 
 func (s *serviceRegistry) callProc(fn func(ctx context.Context)) {

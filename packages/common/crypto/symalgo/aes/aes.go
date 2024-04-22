@@ -62,7 +62,6 @@ func encryptCBC(text, key, iv []byte) ([]byte, error) {
 	encrypted := make([]byte, len(plaintext))
 	mode.CryptBlocks(encrypted, plaintext)
 	return append(iv, encrypted...), nil
-
 }
 
 // CBCDecrypt decrypts the text by using key. It uses CBC mode of AES.
@@ -86,7 +85,6 @@ func decryptCBC(ciphertext, key, iv []byte) ([]byte, error) {
 		return nil, err
 	}
 	return ret, nil
-
 }
 
 // pKCS7Padding realizes PKCS#7 encoding which is described in RFC 5652.
@@ -106,6 +104,7 @@ func pKCS7UnPadding(src []byte) ([]byte, error) {
 	}
 	return src[:length-int(src[length-1])], nil
 }
+
 func PKCS5Padding(ciphertext []byte, blockSize int) []byte {
 	padding := blockSize - len(ciphertext)%blockSize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)

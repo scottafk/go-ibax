@@ -33,7 +33,7 @@ type SpentInfo struct {
 
 type KeyUTXO struct {
 	Ecosystem int64
-	//At        string
+	// At        string
 	KeyId int64
 	// Asset        string
 }
@@ -65,8 +65,7 @@ func CreateSpentInfoBatches(dbTx *gorm.DB, spentInfos []SpentInfo) error {
 }
 
 func GetTxOutputsEcosystem(db *DbTransaction, ecosystem int64, keyIds []int64) ([]SpentInfo, error) {
-	query :=
-		` SELECT si.output_tx_hash, si.output_index, si.output_key_id, si.output_value, si.ecosystem, si.block_id
+	query := ` SELECT si.output_tx_hash, si.output_index, si.output_key_id, si.output_value, si.ecosystem, si.block_id
 		FROM spent_info si LEFT JOIN log_transactions AS tr ON si.output_tx_hash = tr.hash
 		WHERE si.ecosystem = ? AND si.output_key_id IN ? AND  si.input_tx_hash IS NULL
 		ORDER BY si.output_key_id, si.block_id ASC, tr.timestamp ASC `
@@ -79,8 +78,7 @@ func GetTxOutputsEcosystem(db *DbTransaction, ecosystem int64, keyIds []int64) (
 }
 
 func GetTxOutputs(db *DbTransaction, keyIds []int64) ([]SpentInfo, error) {
-	query :=
-		` SELECT si.output_tx_hash, si.output_index, si.output_key_id, si.output_value, si.ecosystem, si.block_id
+	query := ` SELECT si.output_tx_hash, si.output_index, si.output_key_id, si.output_value, si.ecosystem, si.block_id
 		FROM spent_info si LEFT JOIN log_transactions AS tr ON si.output_tx_hash = tr.hash
 		WHERE si.output_key_id IN ? AND si.input_tx_hash IS NULL
 		ORDER BY si.output_key_id, si.block_id ASC, tr.timestamp ASC `

@@ -67,13 +67,12 @@ func TestRangeByTime(t *testing.T) {
 }
 
 func TestBlockOnlineTime(t *testing.T) {
-
 	btc := BlockTimeCounter{
 		start:       time.Unix(1607311077, 0),
 		duration:    4000000000,
 		numberNodes: 3,
 	}
-	//node23 1607336686   node22 1607392437   1607392568  node21 1607408766  1607393213
+	// node23 1607336686   node22 1607392437   1607392568  node21 1607408766  1607393213
 	exists, err := btc.NodeTimeExists(time.Unix(1607393213, 0), int(0))
 	if err != nil {
 		fmt.Println(err.Error())

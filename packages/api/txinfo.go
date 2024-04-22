@@ -9,11 +9,12 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
+	"net/http"
+	"strings"
+
 	"github.com/IBAX-io/go-ibax/packages/block"
 	"github.com/IBAX-io/go-ibax/packages/common"
 	"github.com/IBAX-io/go-ibax/packages/types"
-	"net/http"
-	"strings"
 
 	"github.com/IBAX-io/go-ibax/packages/converter"
 	"github.com/IBAX-io/go-ibax/packages/smart"
@@ -130,7 +131,7 @@ func transactionData(blockId int64, txHash string) (*smart.TxInfo, error) {
 
 	for _, tx := range blck.Transactions {
 		hashStr := hex.EncodeToString(tx.Hash())
-		//find next
+		// find next
 		if hashStr != txHash {
 			continue
 		}
@@ -154,7 +155,7 @@ func transactionData(blockId int64, txHash string) (*smart.TxInfo, error) {
 				info.Params["utxo"] = tx.SmartContract().TxSmart.UTXO
 			}
 		}
-		//find out break
+		// find out break
 		break
 
 	}

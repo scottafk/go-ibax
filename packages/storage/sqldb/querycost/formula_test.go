@@ -6,17 +6,16 @@
 package querycost
 
 import (
-	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
-
 	"errors"
 	"testing"
+
+	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
-type TestTableRowCounter struct {
-}
+type TestTableRowCounter struct{}
 
 const tableRowCount = 10000
 

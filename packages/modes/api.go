@@ -5,11 +5,11 @@
 package modes
 
 import (
-	"github.com/IBAX-io/go-ibax/packages/service/jsonrpc"
 	"net/http"
 
 	"github.com/IBAX-io/go-ibax/packages/api"
 	"github.com/IBAX-io/go-ibax/packages/conf"
+	"github.com/IBAX-io/go-ibax/packages/service/jsonrpc"
 )
 
 func RegisterRoutes() http.Handler {

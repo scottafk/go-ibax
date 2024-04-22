@@ -114,9 +114,9 @@ func (b *Block) ProcessTxs(dbTx *sqldb.DbTransaction) (err error) {
 	//}
 
 	var keyIds []int64
-	var keyIdsMap = make(map[int64]bool)
+	keyIdsMap := make(map[int64]bool)
 	var ecosystemIds []int64
-	var ecosystemIdsMap = make(map[int64]bool)
+	ecosystemIdsMap := make(map[int64]bool)
 	for indexTx := 0; indexTx < len(b.Transactions); indexTx++ {
 		t := b.Transactions[indexTx]
 		if !keyIdsMap[t.KeyID()] {
@@ -206,7 +206,7 @@ func (b *Block) ProcessTxs(dbTx *sqldb.DbTransaction) (err error) {
 		delete(txsMap, types.TransferSelfTxType)
 	}
 
-	//Utxo && Smart contract
+	// Utxo && Smart contract
 	if len(txsMap[types.UtxoTxType]) > 0 || len(txsMap[types.SmartContractTxType]) > 0 {
 		transactions := txsMap[types.UtxoTxType]
 		// utxo group
@@ -313,7 +313,7 @@ func (b *Block) serialExecuteTxs(dbTx *sqldb.DbTransaction, txBadChan chan badTx
 		after.Lts = &types.LogTransaction{
 			Block: t.BlockHeader.BlockId,
 			Hash:  t.Hash(),
-			//TxData:       t.FullData,
+			// TxData:       t.FullData,
 			Timestamp:    t.Timestamp(),
 			Address:      t.KeyID(),
 			EcosystemId:  eco,
@@ -323,7 +323,7 @@ func (b *Block) serialExecuteTxs(dbTx *sqldb.DbTransaction, txBadChan chan badTx
 		after.UpdTxStatus = t.TxResult
 		afters.Txs = append(afters.Txs, after)
 		afters.Rts = append(afters.Rts, t.RollBackTx...)
-		//afters.TxBinLogSql = append(afters.TxBinLogSql, t.DbTransaction.BinLogSql...)
+		// afters.TxBinLogSql = append(afters.TxBinLogSql, t.DbTransaction.BinLogSql...)
 		*processedTx = append(*processedTx, t.FullData)
 
 		sqldb.UpdateTxInputs(t.Hash(), t.TxInputsMap, b.OutputsMap)

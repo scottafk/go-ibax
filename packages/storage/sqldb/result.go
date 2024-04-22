@@ -221,7 +221,7 @@ func (dbTx *DbTransaction) GetList(query string, args ...any) *ListResult {
 func getResult(rows *sql.Rows, countRows int) ([]map[string]string, error) {
 	var result []map[string]string
 	defer rows.Close()
-	//rows.ColumnTypes()
+	// rows.ColumnTypes()
 	columntypes, err := rows.ColumnTypes()
 	if err != nil {
 		return nil, err
@@ -265,7 +265,6 @@ func getResult(rows *sql.Rows, countRows int) ([]map[string]string, error) {
 				} else {
 					value = string(col)
 				}
-
 			}
 			rez[columns[i]] = value
 		}

@@ -8,12 +8,14 @@ package api
 import (
 	"net/http"
 
-	"github.com/IBAX-io/go-ibax/packages/script"
+	"github.com/IBAX-io/needle/compiler"
+	"github.com/IBAX-io/needle/vm"
+
 	"github.com/IBAX-io/go-ibax/packages/smart"
 )
 
 func getContract(r *http.Request, name string) *smart.Contract {
-	vm := script.GetVM()
+	vm := vm.GetVM()
 	if vm == nil {
 		return nil
 	}
@@ -25,6 +27,6 @@ func getContract(r *http.Request, name string) *smart.Contract {
 	return contract
 }
 
-func getContractInfo(contract *smart.Contract) *script.ContractInfo {
+func getContractInfo(contract *smart.Contract) *compiler.ContractInfo {
 	return contract.Info()
 }

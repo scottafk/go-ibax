@@ -25,9 +25,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	ErrNodesUnavailable = errors.New("All nodes unvailabale")
-)
+var ErrNodesUnavailable = errors.New("All nodes unvailabale")
 
 func sendRawTransacitionsToHost(host string, packet []byte) error {
 	con, err := newConnection(host)
@@ -161,13 +159,12 @@ func SendFullBlockToAll(ctx context.Context, hosts []string, block *sqldb.InfoBl
 }
 
 func sendFullBlockRequest(con net.Conn, data []byte) (response []byte, err error) {
-
 	if err := sendDisseminatorRequest(con, network.RequestTypeHonorNode, data); err != nil {
 		log.WithFields(log.Fields{"type": consts.TCPClientError, "error": err}).Error("on sending disseminator request")
 		return nil, err
 	}
 
-	//response
+	// response
 	return resieveRequiredTransactions(con)
 }
 

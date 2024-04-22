@@ -20,7 +20,6 @@ var wrongAddressError = errors.New("Wrong address")
 
 // NormalizeHostAddress get address. if port not defined returns combined string with ip and defaultPort
 func NormalizeHostAddress(address string, defaultPort int64) (string, error) {
-
 	_, _, err := net.SplitHostPort(address)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "missing port in address") {

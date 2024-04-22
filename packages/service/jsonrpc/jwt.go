@@ -7,10 +7,11 @@ package jsonrpc
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/IBAX-io/go-ibax/packages/converter"
 	"github.com/IBAX-io/go-ibax/packages/types"
 	"github.com/golang-jwt/jwt/v4"
-	"strings"
 )
 
 var (

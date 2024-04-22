@@ -55,7 +55,7 @@ func (m Mode) sendTxHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result := &sendTxResult{Hashes: make(map[string]string)}
-	var mtx = make(map[string][]byte, 0)
+	mtx := make(map[string][]byte, 0)
 	for key := range r.MultipartForm.File {
 		txData, err := getTxData(r, key)
 		if err != nil {

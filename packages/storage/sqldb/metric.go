@@ -8,7 +8,7 @@ package sqldb
 import (
 	"time"
 
-	"github.com/IBAX-io/go-ibax/packages/types"
+	"github.com/IBAX-io/needle/compiler"
 )
 
 const tableNameMetrics = "1_metrics"
@@ -77,7 +77,7 @@ func GetMetricValues(metric, timeInterval, aggregateFunc, timeBlock string) ([]a
 			return nil, err
 		}
 
-		result = append(result, types.LoadMap(map[string]any{
+		result = append(result, compiler.LoadMap(map[string]any{
 			"key":   key,
 			"value": value,
 		}))

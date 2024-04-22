@@ -6,13 +6,13 @@
 package api
 
 import (
-	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
 	"net/http"
+
+	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
+	"github.com/IBAX-io/needle/vm"
 
 	"github.com/IBAX-io/go-ibax/packages/consts"
 	"github.com/IBAX-io/go-ibax/packages/converter"
-	"github.com/IBAX-io/go-ibax/packages/script"
-
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
@@ -51,37 +51,37 @@ func getContractInfoHandler(w http.ResponseWriter, r *http.Request) {
 	var result getContractResult
 	info := getContractInfo(contract)
 	con := &sqldb.Contract{}
-	exits, err := con.Get(info.Owner.TableID)
+	exits, err := con.Get(info.Owner.TableId)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "contract_id": info.Owner.TableID}).Error("get contract")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "contract_id": info.Owner.TableId}).Error("get contract")
 		errorResponse(w, errQuery)
 		return
 	}
 	if !exits {
-		logger.WithFields(log.Fields{"type": consts.ContractError, "contract id": info.Owner.TableID}).Debug("get contract")
+		logger.WithFields(log.Fields{"type": consts.ContractError, "contract id": info.Owner.TableId}).Debug("get contract")
 		errorResponse(w, errContract.Errorf(params["name"]))
 		return
 	}
 	fields := make([]contractField, 0)
 	result = getContractResult{
-		ID:         uint32(info.Owner.TableID + consts.ShiftContractID),
-		TableID:    converter.Int64ToStr(info.Owner.TableID),
+		ID:         uint32(info.Owner.TableId + consts.ShiftContractID),
+		TableID:    converter.Int64ToStr(info.Owner.TableId),
 		Name:       info.Name,
-		StateID:    info.Owner.StateID,
-		WalletID:   converter.Int64ToStr(info.Owner.WalletID),
-		TokenID:    converter.Int64ToStr(info.Owner.TokenID),
-		Address:    converter.AddressToString(info.Owner.WalletID),
+		StateID:    info.Owner.StateId,
+		WalletID:   converter.Int64ToStr(info.Owner.WalletId),
+		TokenID:    converter.Int64ToStr(info.Owner.TokenId),
+		Address:    converter.AddressToString(info.Owner.WalletId),
 		Ecosystem:  uint32(con.EcosystemID),
 		AppId:      uint32(con.AppID),
 		Conditions: con.Conditions,
 	}
 
-	if info.Tx != nil {
-		for _, fitem := range *info.Tx {
+	if info.Field != nil {
+		for _, fitem := range *info.Field {
 			fields = append(fields, contractField{
 				Name:     fitem.Name,
-				Type:     script.OriginalToString(fitem.Original),
-				Optional: fitem.ContainsTag(script.TagOptional),
+				Type:     fitem.Type.ToString(),
+				Optional: fitem.ContainsTag(vm.TagOptional),
 			})
 		}
 	}

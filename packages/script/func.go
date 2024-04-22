@@ -31,7 +31,8 @@ func NewExtendData() *ExtendData {
 		AutoPars: map[string]string{
 			`*script.RunTime`: `rt`,
 		},
-		WriteFuncs: map[string]struct{}{"CallContract": {}}}
+		WriteFuncs: map[string]struct{}{"CallContract": {}},
+	}
 }
 
 // ExecContract runs the name contract where txs contains the list of parameters and

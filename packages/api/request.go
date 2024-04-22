@@ -309,8 +309,10 @@ func (connect *Connect) Login() error {
 	if err != nil {
 		return err
 	}
-	form := url.Values{"pubkey": {connect.PublicKey}, "signature": {hex.EncodeToString(sign)},
-		`ecosystem`: {`1`}, "role_id": {"0"}}
+	form := url.Values{
+		"pubkey": {connect.PublicKey}, "signature": {hex.EncodeToString(sign)},
+		`ecosystem`: {`1`}, "role_id": {"0"},
+	}
 	var logret loginResult
 	err = connect.SendPost(`login`, &form, &logret)
 	connect.Auth = logret.Token

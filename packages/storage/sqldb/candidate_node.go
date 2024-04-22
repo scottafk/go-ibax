@@ -27,6 +27,7 @@ type CandidateNodes []CandidateNode
 func (nodes CandidateNodes) Len() int {
 	return len(nodes)
 }
+
 func (nodes CandidateNodes) Swap(i, j int) {
 	nodes[i], nodes[j] = nodes[j], nodes[i]
 }

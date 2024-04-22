@@ -53,7 +53,7 @@ func GetAllPlatformParameters(dbTx *DbTransaction, offset, limit *int, names []s
 	parameters := new([]PlatformParameter)
 	q := GetDB(dbTx)
 	if len(names) > 0 {
-		//if any select names,then all return
+		// if any select names,then all return
 		q = q.Where("name IN ?", names)
 	} else {
 		if offset != nil {

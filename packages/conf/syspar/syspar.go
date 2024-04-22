@@ -107,9 +107,7 @@ var (
 )
 
 func ReadNodeKeys() (err error) {
-	var (
-		nprivkey []byte
-	)
+	var nprivkey []byte
 	nprivkey, err = os.ReadFile(filepath.Join(conf.Config.DirPathConf.KeysDir, consts.NodePrivateKeyFilename))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading node private key from file")
@@ -129,7 +127,7 @@ func ReadNodeKeys() (err error) {
 }
 
 func GetSysParCache() map[string]string {
-	var cp = make(map[string]string, len(cache))
+	cp := make(map[string]string, len(cache))
 	for k, v := range cache {
 		cp[k] = v
 	}
@@ -190,7 +188,6 @@ func updateNodes() (err error) {
 	items := make([]*HonorNode, 0)
 	if len(cache[HonorNodes]) > 0 {
 		err = json.Unmarshal([]byte(cache[HonorNodes]), &items)
-
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "v": cache[HonorNodes]}).Error("unmarshalling honor nodes from json")
 			return err

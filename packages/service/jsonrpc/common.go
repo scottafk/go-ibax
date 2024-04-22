@@ -9,6 +9,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/IBAX-io/go-ibax/packages/common/crypto"
 	"github.com/IBAX-io/go-ibax/packages/conf"
 	"github.com/IBAX-io/go-ibax/packages/conf/syspar"
@@ -16,20 +22,16 @@ import (
 	"github.com/IBAX-io/go-ibax/packages/converter"
 	"github.com/IBAX-io/go-ibax/packages/language"
 	"github.com/IBAX-io/go-ibax/packages/publisher"
-	"github.com/IBAX-io/go-ibax/packages/script"
 	"github.com/IBAX-io/go-ibax/packages/service/node"
 	"github.com/IBAX-io/go-ibax/packages/smart"
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
 	qb "github.com/IBAX-io/go-ibax/packages/storage/sqldb/queryBuilder"
 	"github.com/IBAX-io/go-ibax/packages/template"
 	"github.com/IBAX-io/go-ibax/packages/types"
+	"github.com/IBAX-io/needle/compiler"
+	"github.com/IBAX-io/needle/vm"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"net/http"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 )
 
 type commonApi struct {
@@ -63,7 +65,7 @@ type GetContractResult struct {
 }
 
 func getContract(r *http.Request, name string) *smart.Contract {
-	vm := script.GetVM()
+	vm := vm.GetVM()
 	if vm == nil {
 		return nil
 	}
@@ -75,7 +77,7 @@ func getContract(r *http.Request, name string) *smart.Contract {
 	return contract
 }
 
-func getContractInfo(contract *smart.Contract) *script.ContractInfo {
+func getContractInfo(contract *smart.Contract) *compiler.ContractInfo {
 	return contract.Info()
 }
 
@@ -92,35 +94,35 @@ func (c *commonApi) GetContractInfo(ctx RequestContext, auth Auth, contractName 
 	var result GetContractResult
 	info := getContractInfo(contract)
 	con := &sqldb.Contract{}
-	exits, err := con.Get(info.Owner.TableID)
+	exits, err := con.Get(info.Owner.TableId)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "contract_id": info.Owner.TableID}).Error("get contract")
-		return nil, DefaultError(fmt.Sprintf("get contract %d failed:%s", info.Owner.TableID, err.Error()))
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "contract_id": info.Owner.TableId}).Error("get contract")
+		return nil, DefaultError(fmt.Sprintf("get contract %d failed:%s", info.Owner.TableId, err.Error()))
 	}
 	if !exits {
-		logger.WithFields(log.Fields{"type": consts.ContractError, "contract id": info.Owner.TableID}).Debug("get contract")
-		return nil, DefaultError(fmt.Sprintf("There is not %d contract", info.Owner.TableID))
+		logger.WithFields(log.Fields{"type": consts.ContractError, "contract id": info.Owner.TableId}).Debug("get contract")
+		return nil, DefaultError(fmt.Sprintf("There is not %d contract", info.Owner.TableId))
 	}
 	fields := make([]contractField, 0)
 	result = GetContractResult{
-		ID:         uint32(info.Owner.TableID + consts.ShiftContractID),
-		TableID:    converter.Int64ToStr(info.Owner.TableID),
+		ID:         uint32(info.Owner.TableId + consts.ShiftContractID),
+		TableID:    converter.Int64ToStr(info.Owner.TableId),
 		Name:       info.Name,
-		StateID:    info.Owner.StateID,
-		WalletID:   converter.Int64ToStr(info.Owner.WalletID),
-		TokenID:    converter.Int64ToStr(info.Owner.TokenID),
-		Address:    converter.AddressToString(info.Owner.WalletID),
+		StateID:    info.Owner.StateId,
+		WalletID:   converter.Int64ToStr(info.Owner.WalletId),
+		TokenID:    converter.Int64ToStr(info.Owner.TokenId),
+		Address:    converter.AddressToString(info.Owner.WalletId),
 		Ecosystem:  uint32(con.EcosystemID),
 		AppId:      uint32(con.AppID),
 		Conditions: con.Conditions,
 	}
 
-	if info.Tx != nil {
-		for _, fitem := range *info.Tx {
+	if info.Field != nil {
+		for _, fitem := range *info.Field {
 			fields = append(fields, contractField{
 				Name:     fitem.Name,
-				Type:     script.OriginalToString(fitem.Original),
-				Optional: fitem.ContainsTag(script.TagOptional),
+				Type:     fitem.Original.String(),
+				Optional: fitem.ContainsTag(vm.TagOptional),
 			})
 		}
 	}
@@ -305,7 +307,7 @@ func (c *commonApi) GetKeyInfo(ctx RequestContext, accountAddress string) (*KeyI
 }
 
 type ListForm struct {
-	Name string `json:"name"` //table name
+	Name string `json:"name"` // table name
 	paginatorForm
 	rowForm
 }
@@ -339,7 +341,7 @@ func (f *rowForm) Validate(r *http.Request) error {
 func checkAccess(tableName, columns string, client *UserClient) (table string, cols string, err error) {
 	sc := smart.SmartContract{
 		CLB: conf.Config.IsSupportingCLB(),
-		VM:  script.GetVM(),
+		VM:  vm.GetVM(),
 		TxSmart: &types.SmartTransaction{
 			Header: &types.Header{
 				EcosystemID: client.EcosystemID,
@@ -402,11 +404,11 @@ func (c *commonApi) GetList(ctx RequestContext, auth Auth, form *ListWhereForm) 
 				return nil, DefaultError("Where has wrong format")
 			}
 		case map[string]any:
-			where, err = qb.GetWhere(types.LoadMap(v))
+			where, err = qb.GetWhere(compiler.LoadMap(v))
 			if err != nil {
 				return nil, DefaultError(err.Error())
 			}
-		case *types.Map:
+		case *compiler.Map:
 			where, err = qb.GetWhere(v)
 			if err != nil {
 				return nil, DefaultError(err.Error())
@@ -419,7 +421,6 @@ func (c *commonApi) GetList(ctx RequestContext, auth Auth, form *ListWhereForm) 
 
 	result := new(ListResult)
 	err = q.Count(&result.Count).Error
-
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).
 			Errorf("selecting rows from table %s select %s where %s", table, smart.PrepareColumns([]string{form.Columns}), where)
@@ -559,7 +560,6 @@ func (c *commonApi) GetSections(ctx RequestContext, auth Auth, params *SectionsF
 			roles := &sqldb.Role{}
 			roles.SetTablePrefix(1)
 			role, err := roles.Get(nil, client.RoleID)
-
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Debug("Getting role by id")
 				return nil, DefaultError(err.Error())
@@ -1135,7 +1135,6 @@ func (c *commonApi) GetMenu(ctx RequestContext, auth Auth, name string, vals *ma
 
 	menu.SetTablePrefix(ecosystem)
 	found, err := menu.Get(name)
-
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting menu")
 		return nil, DefaultError(err.Error())

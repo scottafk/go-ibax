@@ -11,7 +11,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/IBAX-io/go-ibax/packages/script"
+	"github.com/IBAX-io/needle/vm"
 
 	"github.com/IBAX-io/go-ibax/packages/types"
 
@@ -162,7 +162,8 @@ func setAllAttr(par parFunc) {
 				if len(parval) > 0 {
 					if off := strings.IndexByte(parval, '='); off == -1 {
 						imap[parval] = map[string]any{
-							`type`: `text`, `text`: parval}
+							`type`: `text`, `text`: parval,
+						}
 					} else {
 						val := strings.TrimSpace(parval[off+1:])
 						if ret := re.FindStringSubmatch(val); len(ret) == 3 {
@@ -171,10 +172,12 @@ func setAllAttr(par parFunc) {
 								plist[i] = strings.TrimSpace(ilist)
 							}
 							imap[strings.TrimSpace(parval[:off])] = map[string]any{
-								`type`: ret[1], `params`: plist}
+								`type`: ret[1], `params`: plist,
+							}
 						} else {
 							imap[strings.TrimSpace(parval[:off])] = map[string]any{
-								`type`: `text`, `text`: val}
+								`type`: `text`, `text`: val,
+							}
 						}
 					}
 				}
@@ -720,7 +723,7 @@ func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte 
 	accountID := (*vars)["account_id"]
 	sc := smart.SmartContract{
 		CLB: isclb,
-		VM:  script.GetVM(),
+		VM:  vm.GetVM(),
 		TxSmart: &types.SmartTransaction{
 			Header: &types.Header{
 				EcosystemID: converter.StrToInt64((*vars)[`ecosystem_id`]),

@@ -28,9 +28,11 @@ type SqlData struct {
 	TokenName   string
 }
 
-var _ fizz.Translator = (*translators.Postgres)(nil)
-var pgt = translators.NewPostgres()
-var tblName string
+var (
+	_       fizz.Translator = (*translators.Postgres)(nil)
+	pgt                     = translators.NewPostgres()
+	tblName string
+)
 
 const (
 	sqlPrimary = "primary"

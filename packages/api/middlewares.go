@@ -42,6 +42,7 @@ func loggerFromRequest(r *http.Request) *log.Entry {
 		"remote":   r.RemoteAddr,
 	})
 }
+
 func loggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := loggerFromRequest(r)
@@ -93,7 +94,7 @@ func tokenMiddleware(next http.Handler) http.Handler {
 	const authHeader = "AUTHORIZATION"
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//token, err := RefreshToken(r.Header.Get(authHeader))
+		// token, err := RefreshToken(r.Header.Get(authHeader))
 		token, err := parseJWTToken(r.Header.Get(authHeader))
 		if err != nil {
 			logger := getLogger(r)

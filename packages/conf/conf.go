@@ -91,7 +91,7 @@ func GetConfigFromPath(path string) (*GlobalConfig, error) {
 func SaveConfig(path string) error {
 	dir := filepath.Dir(path)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err := os.Mkdir(dir, 0775)
+		err := os.Mkdir(dir, 0o775)
 		if err != nil {
 			return errors.Wrapf(err, "creating dir %s", dir)
 		}
@@ -119,7 +119,7 @@ func FillRuntimePaths() error {
 		//	return errors.Wrapf(err, "getting current wd")
 		//}
 
-		//Config.DataDir = filepath.Join(cwd, consts.DefaultWorkdirName)
+		// Config.DataDir = filepath.Join(cwd, consts.DefaultWorkdirName)
 		Config.DirPathConf.DataDir = filepath.Join(consts.DefaultWorkdirName)
 	}
 

@@ -48,41 +48,40 @@ const (
 // VarRegexp letter { letter | unicode_digit }
 var VarRegexp = `^[a-zA-Z][a-zA-Z0-9_]*$`
 
-var (
-	// The array of functions corresponding to the constants cf...
-	funcHandles = map[int]compileFunc{
-		cfNothing:    nil,
-		cfError:      fError,
-		cfNameBlock:  fNameBlock,
-		cfFResult:    fFuncResult,
-		cfReturn:     fReturn,
-		cfIf:         fIf,
-		cfElse:       fElse,
-		cfFParam:     fFparam,
-		cfFType:      fFtype,
-		cfFTail:      fFtail,
-		cfFNameParam: fFNameParam,
-		cfAssignVar:  fAssignVar,
-		cfAssign:     fAssign,
-		cfTX:         fTx,
-		cfSettings:   fSettings,
-		cfConstName:  fConstName,
-		cfConstValue: fConstValue,
-		cfField:      fField,
-		cfFieldType:  fFieldType,
-		cfFieldTag:   fFieldTag,
-		cfFields:     fFields,
-		cfFieldComma: fFieldComma,
-		cfFieldLine:  fFieldLine,
-		cfWhile:      fWhile,
-		cfContinue:   fContinue,
-		cfBreak:      fBreak,
-		cfCmdError:   fCmdError,
-	}
-)
+// The array of functions corresponding to the constants cf...
+var funcHandles = map[int]compileFunc{
+	cfNothing:    nil,
+	cfError:      fError,
+	cfNameBlock:  fNameBlock,
+	cfFResult:    fFuncResult,
+	cfReturn:     fReturn,
+	cfIf:         fIf,
+	cfElse:       fElse,
+	cfFParam:     fFparam,
+	cfFType:      fFtype,
+	cfFTail:      fFtail,
+	cfFNameParam: fFNameParam,
+	cfAssignVar:  fAssignVar,
+	cfAssign:     fAssign,
+	cfTX:         fTx,
+	cfSettings:   fSettings,
+	cfConstName:  fConstName,
+	cfConstValue: fConstValue,
+	cfField:      fField,
+	cfFieldType:  fFieldType,
+	cfFieldTag:   fFieldTag,
+	cfFields:     fFields,
+	cfFieldComma: fFieldComma,
+	cfFieldLine:  fFieldLine,
+	cfWhile:      fWhile,
+	cfContinue:   fContinue,
+	cfBreak:      fBreak,
+	cfCmdError:   fCmdError,
+}
 
 func fError(buf *CodeBlocks, state stateTypes, lexeme *Lexeme) error {
-	errors := []string{`no error`,
+	errors := []string{
+		`no error`,
 		`unknown command`,          // errUnknownCmd
 		`must be the name`,         // errMustName
 		`must be '{'`,              // errMustLCurly
@@ -111,15 +110,16 @@ func fNameBlock(buf *CodeBlocks, state stateTypes, lexeme *Lexeme) error {
 	case stateBlock:
 		itype = ObjectType_Contract
 		name = StateName((*buf)[0].Owner.StateID, name)
-		fblock.Info = &ContractInfo{ID: uint32(len(prev.Children) - 1), Name: name,
-			Owner: (*buf)[0].Owner}
+		fblock.Info = &ContractInfo{
+			ID: uint32(len(prev.Children) - 1), Name: name,
+			Owner: (*buf)[0].Owner,
+		}
 	default:
 		itype = ObjectType_Func
 		fblock.Info = &FuncInfo{Name: name}
 	}
 	fblock.Type = itype
 	if _, ok := prev.Objects[name]; ok {
-		lexeme.GetLogger().WithFields(log.Fields{"type": consts.ParseError, "contract": prev.GetContractInfo().Name, "lex_value": name}).Errorf("%s redeclared in this contract", itype)
 		return fmt.Errorf("%s '%s' redeclared in this contract '%s'", itype, name, prev.GetContractInfo().Name)
 	}
 	prev.Objects[name] = &ObjInfo{Type: itype, Value: fblock}
@@ -164,7 +164,7 @@ func fFparam(buf *CodeBlocks, state stateTypes, lexeme *Lexeme) error {
 		block.Objects = make(map[string]*ObjInfo)
 	}
 	if !regexp.MustCompile(VarRegexp).MatchString(lexeme.Value.(string)) {
-		var val = lexeme.Value.(string)
+		val := lexeme.Value.(string)
 		if len(val) > 20 {
 			val = val[:20] + "..."
 		}
@@ -243,8 +243,10 @@ func fFtail(buf *CodeBlocks, state stateTypes, lexeme *Lexeme) error {
 					}
 				}
 				offset := append((*fblock.Names)[name].Offset, len(block.Vars))
-				(*fblock.Names)[name] = FuncName{Params: (*fblock.Names)[name].Params,
-					Offset: offset, Variadic: true}
+				(*fblock.Names)[name] = FuncName{
+					Params: (*fblock.Names)[name].Params,
+					Offset: offset, Variadic: true,
+				}
 				break
 			}
 		}
@@ -382,7 +384,7 @@ func fField(buf *CodeBlocks, state stateTypes, lexeme *Lexeme) error {
 	}
 
 	if !regexp.MustCompile(VarRegexp).MatchString(lexeme.Value.(string)) {
-		var val = lexeme.Value.(string)
+		val := lexeme.Value.(string)
 		if len(val) > 20 {
 			val = val[:20] + "..."
 		}

@@ -3,8 +3,9 @@ package jsonrpc
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/pkg/errors"
 	"io"
+
+	"github.com/pkg/errors"
 )
 
 const JsonRPCVersion = "2.0"

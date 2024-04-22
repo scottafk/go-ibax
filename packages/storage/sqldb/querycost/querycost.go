@@ -21,15 +21,13 @@ type QueryCoster interface {
 	QueryCost(*sqldb.DbTransaction, string, ...any) (int64, error)
 }
 
-type ExplainQueryCoster struct {
-}
+type ExplainQueryCoster struct{}
 
 func (*ExplainQueryCoster) QueryCost(transaction *sqldb.DbTransaction, query string, args ...any) (int64, error) {
 	return explainQueryCost(transaction, true, query, args...)
 }
 
-type ExplainAnalyzeQueryCoster struct {
-}
+type ExplainAnalyzeQueryCoster struct{}
 
 func (*ExplainAnalyzeQueryCoster) QueryCost(transaction *sqldb.DbTransaction, query string, args ...any) (int64, error) {
 	return explainQueryCost(transaction, true, query, args...)

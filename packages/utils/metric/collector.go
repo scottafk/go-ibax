@@ -6,7 +6,7 @@
 package metric
 
 import (
-	"github.com/IBAX-io/go-ibax/packages/types"
+	"github.com/IBAX-io/needle/compiler"
 )
 
 // CollectorFunc represents function for collects values of metrics
@@ -21,8 +21,8 @@ type Value struct {
 }
 
 // ToMap returns values as map
-func (v *Value) ToMap() *types.Map {
-	return types.LoadMap(map[string]any{
+func (v *Value) ToMap() *compiler.Map {
+	return compiler.LoadMap(map[string]any{
 		"time":   v.Time,
 		"metric": v.Metric,
 		"key":    v.Key,

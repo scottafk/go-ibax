@@ -18,9 +18,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	ErrLastBlock = errors.New("block is not the last")
-)
+var ErrLastBlock = errors.New("block is not the last")
 
 // RollbackBlock is blocking rollback
 func RollbackBlock(data []byte) error {
@@ -91,7 +89,7 @@ func RollbackBlock(data []byte) error {
 func rollbackBlock(dbTx *sqldb.DbTransaction, block *block.Block) error {
 	// rollback transactions in reverse order
 	logger := block.GetLogger()
-	var transferSelfHashes = make([]string, 0)
+	transferSelfHashes := make([]string, 0)
 	for i := len(block.Transactions) - 1; i >= 0; i-- {
 		t := block.Transactions[i]
 		t.DbTransaction = dbTx

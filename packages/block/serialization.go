@@ -28,7 +28,7 @@ func (b *Block) repeatMarshallBlock() error {
 		return errors.Wrap(err, "marshalling repeat block")
 	}
 
-	var nb = new(Block)
+	nb := new(Block)
 	nb, err = UnmarshallBlock(bytes.NewBuffer(newBlockData), true)
 	if err != nil {
 		return errors.Wrap(err, "parsing repeat block")

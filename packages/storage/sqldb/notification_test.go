@@ -36,5 +36,4 @@ func TestGetNotificationCountFilter(t *testing.T) {
 		assert.Equal(t, item.Filter, filter, "on %d step wrong filter %s", i, filter)
 		assert.Equal(t, item.ParamsLength, len(params), "on %d step wrong params length %d", i, len(params))
 	}
-
 }

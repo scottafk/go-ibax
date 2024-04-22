@@ -5,11 +5,12 @@
 package jsonrpc
 
 import (
-	"github.com/IBAX-io/go-ibax/packages/consts"
-	log "github.com/sirupsen/logrus"
 	"reflect"
 	"runtime"
 	"unicode"
+
+	"github.com/IBAX-io/go-ibax/packages/consts"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -159,8 +160,8 @@ func isErrorType(t reflect.Type) bool {
 	for t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
-	//return t.Implements(errorType) //t type is interface
-	return t == errorType //t type is struct
+	// return t.Implements(errorType) //t type is interface
+	return t == errorType // t type is struct
 }
 
 func formatName(name string) string {

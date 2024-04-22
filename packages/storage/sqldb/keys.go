@@ -40,9 +40,11 @@ func (m Key) TableName() string {
 	}
 	return `1_keys`
 }
+
 func (m *Key) Disable() bool {
 	return m.Deleted != 0 || m.Blocked != 0
 }
+
 func (m *Key) CapableAmount() decimal.Decimal {
 	amount := decimal.Zero
 	if len(m.Amount) > 0 {

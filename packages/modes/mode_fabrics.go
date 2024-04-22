@@ -51,11 +51,11 @@ func (l BCDaemonFactory) Load(ctx context.Context) error {
 	}
 
 	if err := syspar.SysUpdate(nil); err != nil {
-		log.Errorf("can't read platform parameters: %s", utils.ErrInfo(err))
+		l.logger.Errorf("can't read platform parameters: %s", utils.ErrInfo(err))
 		return err
 	}
 	if err := syspar.SysTableColType(nil); err != nil {
-		log.Errorf("can't table col type: %s", utils.ErrInfo(err))
+		l.logger.Errorf("can't table col type: %s", utils.ErrInfo(err))
 		return err
 	}
 
@@ -72,15 +72,14 @@ func (l BCDaemonFactory) Load(ctx context.Context) error {
 
 	l.logger.Info("load contracts")
 	if err := smart.LoadContracts(); err != nil {
-		log.Errorf("Load Contracts error: %s", err)
+		l.logger.Errorf("Load Contracts error: %s", err)
 		return err
 	}
 
-	l.logger.Info("start daemons")
 	daemons.StartDaemons(ctx, l.GetDaemonsList())
 
 	if err := tcpserver.TcpListener(conf.Config.TCPServer.Str()); err != nil {
-		log.Errorf("can't start tcp servers, stop")
+		l.logger.Errorf("can't start tcp servers, stop")
 		return err
 	}
 

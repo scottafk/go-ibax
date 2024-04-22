@@ -68,7 +68,7 @@ func (c *ContractInfo) TxMap() map[string]*FieldInfo {
 	if c == nil {
 		return nil
 	}
-	var m = make(map[string]*FieldInfo)
+	m := make(map[string]*FieldInfo)
 	for _, n := range *c.Tx {
 		m[n.Name] = nil
 	}
@@ -93,7 +93,7 @@ type FuncInfo struct {
 	Name    string
 	Params  []reflect.Type
 	Results []reflect.Type
-	//tail function
+	// tail function
 	Names    *map[string]FuncName
 	Variadic bool
 	ID       uint32

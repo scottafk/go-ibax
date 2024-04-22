@@ -7,7 +7,7 @@ package api
 
 import (
 	"errors"
-	"github.com/IBAX-io/go-ibax/packages/script"
+	"net/http"
 
 	"github.com/IBAX-io/go-ibax/packages/conf"
 	"github.com/IBAX-io/go-ibax/packages/consts"
@@ -17,9 +17,10 @@ import (
 	qb "github.com/IBAX-io/go-ibax/packages/storage/sqldb/queryBuilder"
 	"github.com/IBAX-io/go-ibax/packages/template"
 	"github.com/IBAX-io/go-ibax/packages/types"
+	"github.com/IBAX-io/needle/compiler"
+	"github.com/IBAX-io/needle/vm"
 
 	//"io/ioutil"
-	"net/http"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -67,7 +68,7 @@ func (f *SumWhereForm) Validate(r *http.Request) error {
 func checkAccess(tableName, columns string, client *Client) (table string, cols string, err error) {
 	sc := smart.SmartContract{
 		CLB: conf.Config.IsSupportingCLB(),
-		VM:  script.GetVM(),
+		VM:  vm.GetVM(),
 		TxSmart: &types.SmartTransaction{
 			Header: &types.Header{
 				EcosystemID: client.EcosystemID,
@@ -150,7 +151,7 @@ func getListWhereHandler(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, err)
 		return
 	}
-	//q := sqldb.GetTableQuery(params["name"], client.EcosystemID)
+	// q := sqldb.GetTableQuery(params["name"], client.EcosystemID)
 	q := sqldb.GetTableListQuery(params["name"], client.EcosystemID)
 	if len(form.Columns) > 0 {
 		q = q.Select("id," + smart.PrepareColumns([]string{form.Columns}))
@@ -167,12 +168,12 @@ func getListWhereHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		case map[string]any:
-			where, err = qb.GetWhere(types.LoadMap(v))
+			where, err = qb.GetWhere(compiler.LoadMap(v))
 			if err != nil {
 				errorResponse(w, err)
 				return
 			}
-		case *types.Map:
+		case *compiler.Map:
 			where, err = qb.GetWhere(v)
 			if err != nil {
 				errorResponse(w, err)
@@ -187,7 +188,6 @@ func getListWhereHandler(w http.ResponseWriter, r *http.Request) {
 
 	result := new(listResult)
 	err = q.Count(&result.Count).Error
-
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).
 			Errorf("selecting rows from table %s select %s where %s", table, smart.PrepareColumns([]string{form.Columns}), where)
@@ -262,12 +262,12 @@ func getsumWhereHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		case map[string]any:
-			where, err = qb.GetWhere(types.LoadMap(v))
+			where, err = qb.GetWhere(compiler.LoadMap(v))
 			if err != nil {
 				errorResponse(w, err)
 				return
 			}
-		case *types.Map:
+		case *compiler.Map:
 			where, err = qb.GetWhere(v)
 			if err != nil {
 				errorResponse(w, err)
@@ -277,7 +277,7 @@ func getsumWhereHandler(w http.ResponseWriter, r *http.Request) {
 			errorResponse(w, errors.New(`Where has wrong format`))
 			return
 		}
-		//q = q.Where(where)
+		// q = q.Where(where)
 	}
 
 	count, err := sqldb.NewDbTransaction(nil).GetSumColumnCount(table, form.Column, where)

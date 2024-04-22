@@ -19,7 +19,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-//cacheLang is cache for language, first level is lang_name, second is lang dictionary
+// cacheLang is cache for language, first level is lang_name, second is lang dictionary
 type cacheLang struct {
 	res map[string]*map[string]string
 }

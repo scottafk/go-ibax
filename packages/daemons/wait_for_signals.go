@@ -6,11 +6,12 @@
 package daemons
 
 import (
-	"github.com/IBAX-io/go-ibax/packages/chain/system"
-	"github.com/IBAX-io/go-ibax/packages/statsd"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/IBAX-io/go-ibax/packages/chain/system"
+	"github.com/IBAX-io/go-ibax/packages/statsd"
 
 	"github.com/IBAX-io/go-ibax/packages/conf"
 	"github.com/IBAX-io/go-ibax/packages/consts"

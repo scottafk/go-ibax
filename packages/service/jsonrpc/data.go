@@ -4,20 +4,19 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/IBAX-io/go-ibax/packages/common/crypto"
 	"github.com/IBAX-io/go-ibax/packages/consts"
 	"github.com/IBAX-io/go-ibax/packages/converter"
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
 	log "github.com/sirupsen/logrus"
-	"strconv"
-	"strings"
 )
 
-type NotSingle struct {
-}
+type NotSingle struct{}
 
-type dataApi struct {
-}
+type dataApi struct{}
 
 func NewDataApi() *dataApi {
 	return &dataApi{}

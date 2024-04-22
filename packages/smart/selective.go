@@ -13,6 +13,7 @@ import (
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
 	"github.com/IBAX-io/go-ibax/packages/storage/sqldb/querycost"
 	"github.com/IBAX-io/go-ibax/packages/types"
+	"github.com/IBAX-io/needle/compiler"
 
 	qb "github.com/IBAX-io/go-ibax/packages/storage/sqldb/queryBuilder"
 
@@ -32,8 +33,8 @@ func addRollback(sc *SmartContract, table, tableID, rollbackInfoStr, rollDataHas
 }
 
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []any,
-	table string, inWhere *types.Map, generalRollback bool, exists bool) (int64, string, error) {
-
+	table string, inWhere *compiler.Map, generalRollback bool, exists bool,
+) (int64, string, error) {
 	var (
 		cost    int64
 		logData map[string]string
@@ -82,8 +83,10 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []any,
 			return 0, "", errUpdNotExistRecord
 		}
 		if sqlBuilder.IsEmptyWhere() {
-			logger.WithFields(log.Fields{"type": consts.NotFound,
-				"error": errWhereUpdate}).Error("update without where")
+			logger.WithFields(log.Fields{
+				"type":  consts.NotFound,
+				"error": errWhereUpdate,
+			}).Error("update without where")
 			return 0, "", errWhereUpdate
 		}
 	}
@@ -147,12 +150,12 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []any,
 		return 0, "", err
 	}
 
-		insertCost, err := queryCoster.QueryCost(sc.DbTransaction, insertQuery)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": insertQuery}).Error("getting total query cost for insert query")
-			return 0, "", err
-		}
-		rollDataHashStr = insertQuery
+	insertCost, err := queryCoster.QueryCost(sc.DbTransaction, insertQuery)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": insertQuery}).Error("getting total query cost for insert query")
+		return 0, "", err
+	}
+	rollDataHashStr = insertQuery
 	cost += insertCost
 	err = sc.DbTransaction.ExecSql(insertQuery)
 	if err != nil {
@@ -175,19 +178,23 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []any,
 }
 
 func (sc *SmartContract) insert(fields []string, ivalues []any,
-	table string) (int64, string, error) {
+	table string,
+) (int64, string, error) {
 	return sc.selectiveLoggingAndUpd(fields, ivalues, table, nil, !sc.CLB && sc.Rollback, false)
 }
 
 func (sc *SmartContract) updateWhere(fields []string, values []any,
-	table string, where *types.Map) (int64, string, error) {
+	table string, where *compiler.Map,
+) (int64, string, error) {
 	return sc.selectiveLoggingAndUpd(fields, values, table, where, !sc.CLB && sc.Rollback, true)
 }
 
 func (sc *SmartContract) update(fields []string, values []any,
-	table string, whereField string, whereValue any) (int64, string, error) {
-	return sc.updateWhere(fields, values, table, types.LoadMap(map[string]any{
-		whereField: fmt.Sprint(whereValue)}))
+	table string, whereField string, whereValue any,
+) (int64, string, error) {
+	return sc.updateWhere(fields, values, table, compiler.LoadMap(map[string]any{
+		whereField: fmt.Sprint(whereValue),
+	}))
 }
 
 func shortString(raw string, length int) string {

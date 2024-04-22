@@ -2,6 +2,7 @@ package hashalgo
 
 import (
 	"crypto/hmac"
+
 	"golang.org/x/crypto/sha3"
 )
 

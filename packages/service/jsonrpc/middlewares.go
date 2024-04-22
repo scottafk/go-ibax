@@ -5,15 +5,16 @@
 package jsonrpc
 
 import (
+	"net/http"
+	"runtime/debug"
+	"time"
+
 	"github.com/IBAX-io/go-ibax/packages/consts"
 	"github.com/IBAX-io/go-ibax/packages/service/node"
 	"github.com/IBAX-io/go-ibax/packages/statsd"
 	"github.com/didip/tollbooth"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
-	"net/http"
-	"runtime/debug"
-	"time"
 )
 
 func clientMiddleware(next http.Handler, m Mode) http.Handler {
@@ -44,6 +45,7 @@ func loggerFromRequest(r *http.Request) *log.Entry {
 		"remote":   r.RemoteAddr,
 	})
 }
+
 func loggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := loggerFromRequest(r)
@@ -90,7 +92,7 @@ func tokenMiddleware(next http.Handler) http.Handler {
 	const authHeader = "AUTHORIZATION"
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//token, err := RefreshToken(r.Header.Get(authHeader))
+		// token, err := RefreshToken(r.Header.Get(authHeader))
 		token, err := parseJWTToken(r.Header.Get(authHeader))
 		if err != nil {
 			logger := getLogger(r)
@@ -106,7 +108,7 @@ func tokenMiddleware(next http.Handler) http.Handler {
 func statsdMiddleware(next http.Handler) http.Handler {
 	const v = 1.0
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//request url
+		// request url
 		route := mux.CurrentRoute(r)
 
 		counterName := statsd.APIRouteCounterName(r.Method, route.GetName())
@@ -122,7 +124,7 @@ func statsdMiddleware(next http.Handler) http.Handler {
 }
 
 func limiterMiddleware(next http.Handler) http.Handler {
-	//max ten requests per second
+	// max ten requests per second
 	limiter := tollbooth.NewLimiter(10, nil)
 	return tollbooth.LimitHandler(limiter, next)
 }

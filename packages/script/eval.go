@@ -16,9 +16,7 @@ type evalCode struct {
 	Code   *CodeBlock
 }
 
-var (
-	evals = make(map[uint64]*evalCode)
-)
+var evals = make(map[uint64]*evalCode)
 
 // CompileEval compiles conditional expression
 func (vm *VM) CompileEval(input string, state uint32) error {

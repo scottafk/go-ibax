@@ -33,6 +33,7 @@ const (
 	Extend_stack    = `stack`
 	Extend_loop     = `loop_`
 )
+
 const (
 	// system variable cannot be changed
 	sysVars_block               = `block`

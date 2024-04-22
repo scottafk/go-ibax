@@ -2,11 +2,11 @@ package asymalgo
 
 import (
 	"crypto/ecdsa"
-
-	crand "crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"math/big"
+
+	crand "crypto/rand"
 
 	"github.com/IBAX-io/go-ibax/packages/consts"
 	secp "github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -38,7 +38,6 @@ func (s *Secp256k1) Sign(privateKey, hash []byte) ([]byte, error) {
 	}
 	ret := append(FillLeft(r.Bytes()), FillLeft(s_.Bytes())...)
 	return ret, nil
-
 }
 
 func (s *Secp256k1) Verify(public, hash, signature []byte) (bool, error) {

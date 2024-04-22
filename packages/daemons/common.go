@@ -8,22 +8,19 @@ package daemons
 import (
 	"context"
 	"fmt"
-	"github.com/IBAX-io/go-ibax/packages/transaction"
 	"strings"
 	"time"
 
 	"github.com/IBAX-io/go-ibax/packages/block"
-	"github.com/IBAX-io/go-ibax/packages/types"
-
-	"github.com/IBAX-io/go-ibax/packages/conf/syspar"
-	"github.com/IBAX-io/go-ibax/packages/service/node"
-
-	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
-
 	"github.com/IBAX-io/go-ibax/packages/conf"
+	"github.com/IBAX-io/go-ibax/packages/conf/syspar"
 	"github.com/IBAX-io/go-ibax/packages/consts"
 	"github.com/IBAX-io/go-ibax/packages/converter"
+	"github.com/IBAX-io/go-ibax/packages/service/node"
 	"github.com/IBAX-io/go-ibax/packages/statsd"
+	"github.com/IBAX-io/go-ibax/packages/storage/sqldb"
+	"github.com/IBAX-io/go-ibax/packages/transaction"
+	"github.com/IBAX-io/go-ibax/packages/types"
 	"github.com/IBAX-io/go-ibax/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -79,7 +76,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(context.
 		logger:        logger,
 	}
 	idleDelay := time.NewTimer(d.sleepTime)
-	//defer idleDelay.Stop()
+	// defer idleDelay.Stop()
 	for {
 		idleDelay.Reset(d.sleepTime)
 		select {
@@ -112,7 +109,7 @@ func StartDaemons(ctx context.Context, daemonsToStart []string) {
 		}
 	}()
 
-	//go Ntp_Work(ctx)
+	// go Ntp_Work(ctx)
 	// ctx, cancel := context.WithCancel(context.Background())
 	// utils.CancelFunc = cancel
 	// utils.ReturnCh = make(chan string)
@@ -127,7 +124,7 @@ func StartDaemons(ctx context.Context, daemonsToStart []string) {
 		handler, ok := daemonsList[name]
 		if ok {
 			go daemonLoop(ctx, name, handler, utils.ReturnCh)
-			log.WithFields(log.Fields{"daemon_name": name}).Info("started")
+			log.Info("started daemon ", name)
 			utils.DaemonsCount++
 			continue
 		}
@@ -143,9 +140,9 @@ func getHostPort(h string) string {
 	return fmt.Sprintf("%s:%d", h, consts.DefaultTcpPort)
 }
 
-//ntp
+// ntp
 func Ntp_Work(ctx context.Context) {
-	var count = 0
+	count := 0
 	for {
 		select {
 		case <-ctx.Done():
@@ -185,7 +182,7 @@ func generateProcessBlockNew(blockHeader, prevBlock *types.BlockHeader, trs [][]
 	if err != nil {
 		return err
 	}
-	//err = block.InsertBlockWOForks(blockBin, true, false)
+	// err = block.InsertBlockWOForks(blockBin, true, false)
 	err = block.InsertBlockWOForksNew(blockBin, classifyTxsMap, true, false)
 	if err != nil {
 		log.WithError(err).Error("on inserting new block")

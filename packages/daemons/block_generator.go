@@ -150,7 +150,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	if err != nil {
 		return err
 	}
-	//go notificator.CheckTokenMovementLimits(nil, conf.Config.TokenMovement, header.BlockId)
+	// go notificator.CheckTokenMovementLimits(nil, conf.Config.TokenMovement, header.BlockId)
 	return nil
 }
 
@@ -163,7 +163,7 @@ func generateNextBlock(blockHeader, prevBlock *types.BlockHeader, trs [][]byte) 
 
 func processTransactionsNew(logger *log.Entry, txs []*sqldb.Transaction, st time.Time) ([][]byte, map[int][]*transaction.Transaction, error) {
 	classifyTxsMap := make(map[int][]*transaction.Transaction)
-	var done = make(<-chan time.Time, 1)
+	done := make(<-chan time.Time, 1)
 	if syspar.IsHonorNodeMode() {
 		btc := protocols.NewBlockTimeCounter()
 		_, endTime, err := btc.RangeByTime(st)

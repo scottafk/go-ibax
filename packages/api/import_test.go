@@ -24,7 +24,7 @@ func ImportApps(path, appname string) error {
 	if err != nil {
 		return err
 	}
-	var val = make(map[any]any)
+	val := make(map[any]any)
 	val["Body"] = apps
 	val["MimeType"] = "application/json"
 	val["Name"] = appname + ".json"
@@ -55,6 +55,7 @@ func ImportApps(path, appname string) error {
 	}
 	return nil
 }
+
 func TestImportApps(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 	path, err := os.Getwd()

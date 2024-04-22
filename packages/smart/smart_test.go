@@ -7,7 +7,9 @@ package smart
 import (
 	"testing"
 
-	"github.com/IBAX-io/go-ibax/packages/script"
+	"github.com/IBAX-io/needle/compiler"
+	"github.com/IBAX-io/needle/vm"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,7 +40,7 @@ func TestNewContract(t *testing.T) {
 }			
 		`, ``},
 	}
-	owner := script.OwnerInfo{
+	owner := compiler.OwnerInfo{
 		StateID:  1,
 		Active:   false,
 		TableID:  1,
@@ -47,13 +49,13 @@ func TestNewContract(t *testing.T) {
 	}
 	InitVM()
 	for _, item := range test {
-		if err := script.GetVM().Compile([]rune(item.Input), &owner); err != nil {
+		if err := vm.GetVM().Compile([]rune(item.Input), &owner); err != nil {
 			t.Error(err)
 		}
 	}
 	cnt := GetContract(`NewCitizen`, 1)
 	cfunc := cnt.GetFunc(`conditions`)
-	_, err := script.VMRun(script.GetVM(), cfunc, nil, map[string]any{}, nil)
+	_, err := vm.Run(vm.GetVM(), cfunc, map[string]any{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -68,7 +70,7 @@ func TestCheckAppend(t *testing.T) {
 		}
 	}`
 
-	owner := script.OwnerInfo{
+	owner := compiler.OwnerInfo{
 		StateID:  1,
 		Active:   false,
 		TableID:  1,
@@ -76,11 +78,11 @@ func TestCheckAppend(t *testing.T) {
 		TokenID:  0,
 	}
 
-	require.NoError(t, script.GetVM().Compile([]rune(appendTestContract), &owner))
+	require.NoError(t, vm.GetVM().Compile([]rune(appendTestContract), &owner))
 
 	cnt := GetContract("AppendTest", 1)
 	cfunc := cnt.GetFunc("action")
 
-	_, err := script.VMRun(script.GetVM(), cfunc, nil, map[string]any{}, nil)
+	_, err := vm.Run(vm.GetVM(), cfunc, map[string]any{})
 	require.NoError(t, err)
 }

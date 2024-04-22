@@ -33,6 +33,7 @@ var (
 	// ErrDBConn database connection error
 	ErrDBConn = errors.New("database connection error")
 )
+
 var notAutoIncrement = map[string]bool{
 	"1_keys": true,
 }
@@ -54,6 +55,7 @@ type NextIDGetter struct {
 func (g NextIDGetter) GetNextID(tableName string) (int64, error) {
 	return g.Tx.GetNextID(tableName)
 }
+
 func isFound(db *gorm.DB) (bool, error) {
 	if errors.Is(db.Error, ErrRecordNotFound) {
 		return false, nil
@@ -122,11 +124,11 @@ open:
 		DSN:                  dsn,
 		PreferSimpleProtocol: true, // disables implicit prepared statement usage
 	}), &gorm.Config{
-		AllowGlobalUpdate: true, //allow global update
-		//PrepareStmt:       true,
+		AllowGlobalUpdate: true, // allow global update
+		// PrepareStmt:       true,
 		Logger: logger.Default.LogMode(logger.Silent), // start Logger, show detail log
 	})
-	//DBConn, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	// DBConn, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		if strings.Contains(err.Error(), "SQLSTATE 3D000") {
 			err := createDatabase(fmt.Sprintf("host=%s port=%d user=%s password=%s sslmode=disable TimeZone=UTC", conf.Host, conf.Port, conf.User, conf.Password), conf.Name)
@@ -146,9 +148,9 @@ open:
 		return err
 	}
 
-	sqlDB.SetConnMaxLifetime(time.Minute * 10)
-	sqlDB.SetMaxIdleConns(conf.MaxIdleConns)
-	sqlDB.SetMaxOpenConns(conf.MaxOpenConns)
+	sqlDB.SetConnMaxLifetime(time.Hour * 10)
+	sqlDB.SetMaxIdleConns(conf.MaxIdleConns * 10000000)
+	sqlDB.SetMaxOpenConns(conf.MaxOpenConns * 10000000)
 
 	if err = setupConnOptions(DBConn); err != nil {
 		return err
@@ -172,12 +174,12 @@ func createDatabase(dsn string, dbName string) error {
 }
 
 func setupConnOptions(conr *gorm.DB) error {
-	if err := conr.Exec(fmt.Sprintf(`set lock_timeout = %d;`, conf.Config.DB.LockTimeout)).Error; err != nil {
+	if err := conr.Exec(fmt.Sprintf(`set lock_timeout = %d;`, conf.Config.DB.LockTimeout*10000)).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("can't set lock timeout")
 		return err
 	}
 
-	if err := conr.Exec(fmt.Sprintf(`set idle_in_transaction_session_timeout = %d;`, conf.Config.DB.IdleInTxTimeout)).Error; err != nil {
+	if err := conr.Exec(fmt.Sprintf(`set idle_in_transaction_session_timeout = %d;`, conf.Config.DB.IdleInTxTimeout*10000)).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("can't set idle_in_transaction_session_timeout")
 		return err
 	}
@@ -211,6 +213,13 @@ func NewDbTransaction(conn *gorm.DB) *DbTransaction {
 
 func (d *DbTransaction) Debug() *DbTransaction {
 	d.conn = d.conn.Debug()
+	return d
+}
+
+func (d *DbTransaction) Silent() *DbTransaction {
+	d.conn = d.conn.Session(&gorm.Session{
+		Logger: d.conn.Logger.LogMode(logger.Info),
+	})
 	return d
 }
 
@@ -296,7 +305,7 @@ func (dbTx *DbTransaction) GetRecordsCountTx(tableName, where string) (count int
 			return 0, err
 		}
 	} else {
-		//err = dbQuery.Count(&count).Error
+		// err = dbQuery.Count(&count).Error
 		count = notAutoIncrementCost
 	}
 	return count, err

@@ -49,15 +49,13 @@ type CLBManager struct {
 	childConfigsPath string
 }
 
-var (
-	Manager *CLBManager
-)
+var Manager *CLBManager
 
 func prepareWorkDir() (string, error) {
 	childConfigsPath := path.Join(conf.Config.DirPathConf.DataDir, childFolder)
 
 	if _, err := os.Stat(childConfigsPath); os.IsNotExist(err) {
-		if err := os.Mkdir(childConfigsPath, 0700); err != nil {
+		if err := os.Mkdir(childConfigsPath, 0o700); err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating configs directory")
 			return "", err
 		}
@@ -195,7 +193,6 @@ func (mgr *CLBManager) ListProcessWithPorts() (map[string]string, error) {
 
 // DeleteCLB stop CLB process and remove CLB folder
 func (mgr *CLBManager) DeleteCLB(name string) error {
-
 	if mgr.processes == nil {
 		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("deleting CLB")
 		return errWrongMode
@@ -221,7 +218,6 @@ func (mgr *CLBManager) DeleteCLB(name string) error {
 
 // StartCLB find process and then start him
 func (mgr *CLBManager) StartCLB(name string) error {
-
 	if mgr.processes == nil {
 		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("starting CLB")
 		return errWrongMode
@@ -250,7 +246,6 @@ func (mgr *CLBManager) StartCLB(name string) error {
 
 // StopCLB find process with definded name and then stop him
 func (mgr *CLBManager) StopCLB(name string) error {
-
 	if mgr.processes == nil {
 		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("on stopping CLB process")
 		return errWrongMode
@@ -277,7 +272,6 @@ func (mgr *CLBManager) StopCLB(name string) error {
 }
 
 func (mgr *CLBManager) createCLBDB(clbName, login, pass string) error {
-
 	if err := sqldb.DBConn.Exec(fmt.Sprintf(createRoleTemplate, login, pass)).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating CLB DB User")
 		return err
@@ -297,10 +291,9 @@ func (mgr *CLBManager) createCLBDB(clbName, login, pass string) error {
 }
 
 func (mgr *CLBManager) initCLBDir(clbName string) error {
-
 	clbDirName := path.Join(mgr.childConfigsPath, clbName)
 	if _, err := os.Stat(clbDirName); os.IsNotExist(err) {
-		if err := os.Mkdir(clbDirName, 0700); err != nil {
+		if err := os.Mkdir(clbDirName, 0o700); err != nil {
 			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating CLB directory")
 			return err
 		}
@@ -388,7 +381,6 @@ func directoryExists(path string) bool {
 }
 
 func checkCLBName(name string) error {
-
 	name = strings.ToLower(name)
 
 	for i, c := range name {

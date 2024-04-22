@@ -20,7 +20,7 @@ func httpListener(ListenHTTPHost string, route http.Handler) {
 	l, err := net.Listen("tcp", ListenHTTPHost)
 	log.WithFields(log.Fields{"host": ListenHTTPHost, "type": consts.NetworkError}).Debug("trying to listen at")
 	if err == nil {
-		log.WithFields(log.Fields{"host": ListenHTTPHost}).Info("listening at")
+		log.WithFields(log.Fields{"host": ListenHTTPHost}).Info("Listening at http local address: ", ListenHTTPHost)
 	} else {
 		log.WithFields(log.Fields{"host": ListenHTTPHost, "error": err, "type": consts.NetworkError}).Debug("cannot listen at host")
 	}

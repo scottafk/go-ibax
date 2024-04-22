@@ -22,7 +22,7 @@ var (
 	jwtPrefix       = "Bearer "
 	jwtExpire       = 28800 // By default, seconds
 	jwtrefeshExpire = 600   // By default, seconds
-	//jwtrefeshExpire = 10   // By default, seconds  test
+	// jwtrefeshExpire = 10   // By default, seconds  test
 
 	errJWTAuthValue      = errors.New("wrong authorization value")
 	errEcosystemNotFound = errors.New("ecosystem not found")

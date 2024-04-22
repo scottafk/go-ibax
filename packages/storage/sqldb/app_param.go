@@ -42,7 +42,7 @@ func (sp *AppParam) GetAllAppParameters(app int64, offset, limit *int, names []s
 	parameters := make([]AppParam, 0)
 	q := DBConn.Table(sp.TableName()).Where(`ecosystem = ?`, sp.ecosystem).Where(`app_id = ?`, app)
 	if len(names) > 0 {
-		//if any select names,then all return
+		// if any select names,then all return
 		q = q.Where("name IN ?", names)
 	} else {
 		if offset != nil {

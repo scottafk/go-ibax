@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 package types
 
-//type File *Map
+type File *Map
 
 func NewFile() *Map {
 	return LoadMap(map[string]any{

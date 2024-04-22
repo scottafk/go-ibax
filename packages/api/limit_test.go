@@ -21,9 +21,11 @@ func TestLimit(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
 	rnd := randName(``)
-	form := url.Values{"Name": {"tbl" + rnd}, "Columns": {`[{"name":"name","type":"number",   "conditions":"true"},
+	form := url.Values{
+		"Name": {"tbl" + rnd}, "Columns": {`[{"name":"name","type":"number",   "conditions":"true"},
 	{"name":"block", "type":"varchar","conditions":"true"}]`},
-		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`},
+	}
 	assert.NoError(t, postTx(`NewTable`, &form))
 
 	form = url.Values{`Value`: {`contract Limit` + rnd + ` {

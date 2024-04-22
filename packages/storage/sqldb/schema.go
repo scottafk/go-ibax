@@ -68,7 +68,6 @@ func ExecSubSchema() error {
 
 // ExecCLBSchema is executing schema for off blockchainService
 func ExecCLBSchema(id int, wallet int64) error {
-
 	if conf.Config.IsSupportingCLB() {
 		if err := migration.InitMigrate(&MigrationHistory{}); err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on executing clb script")

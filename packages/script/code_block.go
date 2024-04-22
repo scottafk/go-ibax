@@ -141,7 +141,7 @@ type ObjInfo_Variable struct {
 	Index int
 }
 type ObjInfo_ExtendVariable struct {
-	//object extend variable name
+	// object extend variable name
 	Name string
 }
 
@@ -209,7 +209,8 @@ func (b *CodeBlock) Extend(ext *ExtendData) {
 				Auto:     make([]string, fobj.NumIn()),
 				Variadic: fobj.IsVariadic(),
 				Func:     item,
-				CanWrite: canWrite}
+				CanWrite: canWrite,
+			}
 			for i := 0; i < fobj.NumIn(); i++ {
 				if isauto, ok := ext.AutoPars[fobj.In(i).String()]; ok {
 					data.Auto[i] = isauto
@@ -282,6 +283,7 @@ func setWritable(block *CodeBlocks) {
 		}
 	}
 }
+
 func (ret *ObjInfo) getInParams() int {
 	if ret.Type == ObjectType_ExtFunc {
 		return len(ret.GetExtFuncInfo().Params)

@@ -20,9 +20,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var stopNetworkBundleFilepath string
-var testBlockchain bool
-var privateBlockchain bool
+var (
+	stopNetworkBundleFilepath string
+	testBlockchain            bool
+	privateBlockchain         bool
+)
 
 // generateFirstBlockCmd represents the generateFirstBlock command
 var generateFirstBlockCmd = &cobra.Command{
@@ -34,7 +36,7 @@ var generateFirstBlockCmd = &cobra.Command{
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block marshalling")
 		}
-		os.WriteFile(conf.Config.DirPathConf.FirstBlockPath, block, 0644)
+		os.WriteFile(conf.Config.DirPathConf.FirstBlockPath, block, 0o644)
 		log.Info("first block generated")
 	},
 }

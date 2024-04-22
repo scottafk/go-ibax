@@ -9,10 +9,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/IBAX-io/needle/vm"
+
 	"github.com/IBAX-io/go-ibax/packages/common/crypto"
 	"github.com/IBAX-io/go-ibax/packages/conf"
 	"github.com/IBAX-io/go-ibax/packages/conf/syspar"
-	"github.com/IBAX-io/go-ibax/packages/script"
 	"github.com/IBAX-io/go-ibax/packages/smart"
 	"github.com/IBAX-io/go-ibax/packages/transaction"
 	"github.com/IBAX-io/go-ibax/packages/types"
@@ -122,7 +123,7 @@ func (nbs *NodesBanService) localBan(node syspar.HonorNode) {
 	nbs.localBannedNodes[crypto.Address(node.PublicKey)] = localBannedNode{
 		HonorNode:      &node,
 		LocalUnBanTime: time.Unix(te, 0),
-		//LocalUnBanTime: time.Now().Add(syspar.GetLocalNodeBanTime()),
+		// LocalUnBanTime: time.Now().Add(syspar.GetLocalNodeBanTime()),
 	}
 }
 
@@ -141,13 +142,13 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.HonorNode, blockId, bloc
 		return errors.New("cant find current node in honor nodes list")
 	}
 
-	vm := script.GetVM()
+	vm := vm.GetVM()
 	contract := smart.VMGetContract(vm, "NewBadBlock", 1)
 	info := contract.Info()
 
 	sc := types.SmartTransaction{
 		Header: &types.Header{
-			ID:          int(info.ID),
+			ID:          int(info.Id),
 			EcosystemID: 1,
 			Time:        time.Now().Unix(),
 			KeyID:       conf.Config.KeyID,
